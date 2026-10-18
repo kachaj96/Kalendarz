@@ -3,10 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart' show Color;
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:home_widget/home_widget.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -42,6 +42,9 @@ const _kPlanHash = 'device.planHash';
 const _kSnapshotHash = 'device.snapshotHash';
 const _kSeenShared = 'device.seenSharedIds';
 const _kAskedPermission = 'device.askedNotifications';
+
+/// Kanał do MainActivity.kt: optymalizacja baterii i ekran ustawień powiadomień.
+const _system = MethodChannel('kalendarz/system');
 const _kScheduledCount = 'device.scheduledCount';
 
 /// Prawdziwa obsługa Androida: alarmy przez flutter_local_notifications, widżety przez home_widget.
@@ -218,7 +221,9 @@ class AndroidDevicePort implements DevicePort {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_kAskedPermission) ?? false) return;
     await prefs.setBool(_kAskedPermission, true);
-    await requestNotifications();
+    // Przy pierwszym uruchomieniu tylko systemowe pytanie, bez wyrzucania do ustawień po odmowie.
+    await _ensureInit();
+    await _android?.requestNotificationsPermission();
   }
 
   @override
@@ -229,7 +234,8 @@ class AndroidDevicePort implements DevicePort {
       notificationsEnabled: await _android?.areNotificationsEnabled() ?? false,
       exactAlarms: await _android?.canScheduleExactNotifications() ?? false,
       batteryUnrestricted:
-          await Permission.ignoreBatteryOptimizations.isGranted,
+          await _system.invokeMethod<bool>('isIgnoringBatteryOptimizations') ??
+          false,
       scheduledCount: prefs.getInt(_kScheduledCount) ?? 0,
     );
   }
@@ -238,8 +244,9 @@ class AndroidDevicePort implements DevicePort {
   Future<void> requestNotifications() async {
     await _ensureInit();
     final granted = await _android?.requestNotificationsPermission();
-    if (granted == false && await Permission.notification.isPermanentlyDenied) {
-      await openAppSettings();
+    // Po dwóch odmowach Android już nie pyta, więc zostaje ekran ustawień aplikacji.
+    if (granted == false) {
+      await _system.invokeMethod<void>('openNotificationSettings');
     }
   }
 
@@ -251,7 +258,7 @@ class AndroidDevicePort implements DevicePort {
 
   @override
   Future<void> requestBatteryUnrestricted() async {
-    await Permission.ignoreBatteryOptimizations.request();
+    await _system.invokeMethod<void>('requestIgnoreBatteryOptimizations');
   }
 
   @override
