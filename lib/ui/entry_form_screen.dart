@@ -42,6 +42,7 @@ class EntryFormScreen extends ConsumerStatefulWidget {
 class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   final _title = TextEditingController();
   final _description = TextEditingController();
+  final _location = TextEditingController();
   final _items = <_Item>[];
 
   EntryType _type = EntryType.event;
@@ -88,6 +89,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     _type = e.type;
     _title.text = e.title;
     _description.text = e.description;
+    _location.text = e.location;
     _allDay = e.allDay || e.startMinutes == null;
     _startDate = e.date;
     _endDate = e.endDate;
@@ -118,6 +120,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   void dispose() {
     _title.dispose();
     _description.dispose();
+    _location.dispose();
     for (final i in _items) {
       i.dispose();
     }
@@ -306,6 +309,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
       type: _type,
       title: title,
       description: _description.text.trim(),
+      location: _location.text.trim(),
       date: _startDate,
       endDate: _endDate,
       allDay: _allDay,
@@ -562,6 +566,35 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       textCapitalization: TextCapitalization.sentences,
                       decoration: const InputDecoration(
                         hintText: 'Opis',
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (_) => _change(() {}),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Icon(
+                      Icons.place_outlined,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('entry-location'),
+                      controller: _location,
+                      textCapitalization: TextCapitalization.sentences,
+                      keyboardType: TextInputType.streetAddress,
+                      decoration: const InputDecoration(
+                        hintText: 'Miejsce (adres albo link z Map)',
                         border: InputBorder.none,
                       ),
                       onChanged: (_) => _change(() {}),

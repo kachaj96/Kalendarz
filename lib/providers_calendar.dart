@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'data/local_repository.dart';
 import 'data/shared_store.dart';
@@ -12,6 +13,12 @@ import 'space/models.dart';
 
 /// Alarmy, widżety i uprawnienia Androida. W testach podmieniane na wersję bez efektów.
 final devicePortProvider = Provider<DevicePort>((ref) => AndroidDevicePort());
+
+/// Otwiera link w zewnętrznej aplikacji (Google Maps albo przeglądarka).
+final urlOpenerProvider = Provider<Future<bool> Function(Uri)>(
+  (ref) =>
+      (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+);
 
 /// Aktualny czas. Osobny provider, żeby testy mogły go podmienić.
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);

@@ -80,10 +80,13 @@ Entry makeEntry({
 );
 
 class TestStores {
-  TestStores(this.local, this.shared);
+  TestStores(this.local, this.shared, this.openedUrls);
 
   final MemoryLocalStore local;
   final MemorySharedStore shared;
+
+  /// Linki, które aplikacja próbowała otworzyć (np. Google Maps).
+  final List<Uri> openedUrls;
 }
 
 /// Uruchamia główny ekran z zadanymi wpisami i zwraca oba magazyny (telefon i wspólna baza),
@@ -108,6 +111,7 @@ Future<TestStores> pumpHome(
     entries: sharedEntries,
     categories: sharedCategories,
   );
+  final opened = <Uri>[];
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -118,6 +122,10 @@ Future<TestStores> pumpHome(
         currentSpaceIdProvider.overrideWithValue(space.id),
         memberProfilesProvider.overrideWithValue(space.profiles),
         devicePortProvider.overrideWithValue(device ?? NoopDevicePort()),
+        urlOpenerProvider.overrideWithValue((uri) async {
+          opened.add(uri);
+          return true;
+        }),
       ],
       child: AppShell(
         home: HomeShell(space: space, meUid: 'u1'),
@@ -125,5 +133,5 @@ Future<TestStores> pumpHome(
     ),
   );
   await tester.pumpAndSettle();
-  return TestStores(local, shared);
+  return TestStores(local, shared, opened);
 }

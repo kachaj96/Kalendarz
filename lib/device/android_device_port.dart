@@ -12,6 +12,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/dates.dart';
+import '../settings/app_settings.dart' show WidgetTextMode;
 import 'device_port.dart';
 import 'reminder_plan.dart';
 import 'widget_snapshot.dart';
@@ -318,6 +319,22 @@ class AndroidDevicePort implements DevicePort {
     // Testowy alarm nie należy do planu, więc następne przeliczenie musi przebudować listę.
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kPlanHash);
+  }
+
+  @override
+  Future<void> setWidgetStyle({
+    required int opacity,
+    required WidgetTextMode text,
+  }) async {
+    await HomeWidget.saveWidgetData<String>(
+      'style',
+      jsonEncode({'o': opacity, 't': text.name}),
+    );
+    for (final name in widgetProviders) {
+      await HomeWidget.updateWidget(
+        qualifiedAndroidName: '$_widgetPackage.$name',
+      );
+    }
   }
 
   @override

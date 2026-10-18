@@ -11,7 +11,9 @@ Stan: **wersja 1.0**.
 - Kategorie z kolorami: wspólne (osiem domyślnych, w tym Sport, plus własne) i lokalne.
 - Przypomnienia jako alarmy w telefonie. O wspólnych wpisach przypominają oba telefony.
 - Synchronizacja w tle mniej więcej co 30 minut: alarmy dla nowych wpisów partnera i powiadomienie, że coś dodał.
-- Cztery widżety: Najbliższe, Dziś, Tydzień, Miesiąc. Dotknięcie otwiera aplikację na właściwym dniu.
+- Cztery widżety: Najbliższe, Dziś, Tydzień, Miesiąc. Dotknięcie otwiera aplikację na właściwym dniu. Tło pełne, 75%, 50% albo przezroczyste, tekst jasny lub ciemny.
+- Miejsce przy wpisie (adres, nazwa albo link z Google Maps) z przyciskami Trasa i Na mapie.
+- Motyw jasny, ciemny albo jak w telefonie.
 
 - `mockup/index.html` - klikalna makieta (wybrana wersja A)
 - `lib/` - aplikacja Flutter
@@ -57,6 +59,7 @@ Klucz podpisujący `android/keystore/kalendarz.p12` leży w repozytorium, ale je
 - Jeśli przypomnienia się spóźniają albo nie przychodzą, zezwól aplikacji na działanie bez ograniczeń baterii (przycisk w tym samym miejscu). Na Xiaomi, Huawei i Samsungu bywa to konieczne.
 - Widżet dodajesz jak każdy inny: przytrzymaj puste miejsce na ekranie głównym, wybierz **Widżety**, znajdź **Kalendarz** i przeciągnij wybrany. Rozmiar zmienisz, przytrzymując widżet.
 - Widżety odświeżają się od razu po zmianach w aplikacji, w tle co ok. 30 minut i tuż po północy.
+- Wygląd widżetów i motyw aplikacji ustawiasz w **Partner i ustawienia -> Wygląd**.
 
 ## Rozwój
 

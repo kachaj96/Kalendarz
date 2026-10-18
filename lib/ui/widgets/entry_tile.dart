@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/dates.dart';
 import '../../domain/entry.dart';
+import '../../domain/maps_links.dart';
 import '../../domain/occurrence.dart';
 import '../../providers_calendar.dart';
 import '../format.dart';
@@ -47,6 +48,8 @@ class EntryTile extends ConsumerWidget {
       if (partnerInitial(ref, e) case final String initial)
         _PartnerBadge(initial),
       if (e.isRecurring) _MetaIcon(Icons.repeat, 'Powtarza się'),
+      if (e.location.trim().isNotEmpty)
+        _MetaText(Icons.place_outlined, locationLabel(e.location)),
       if (e.checklist.isNotEmpty)
         _MetaText(
           Icons.checklist,

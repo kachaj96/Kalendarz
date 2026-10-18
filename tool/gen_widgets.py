@@ -279,9 +279,24 @@ def info(layout, desc, min_w, min_h, cells_w, cells_h):
 """
 
 
-write(RES / "layout" / "widget_list.xml", list_layout())
-write(RES / "layout" / "widget_week.xml", week_layout())
-write(RES / "layout" / "widget_month.xml", month_layout())
+SHADOW = (
+    '<TextView\n'
+    '                android:shadowColor="#B3000000"\n'
+    '                android:shadowDx="0"\n'
+    '                android:shadowDy="1"\n'
+    '                android:shadowRadius="3"\n'
+)
+
+
+def with_shadow(xml):
+    """Ten sam układ z cieniem pod tekstem: dla jasnego tekstu na przezroczystym tle."""
+    return xml.replace("<TextView\n", SHADOW)
+
+
+for name, build in [("widget_list", list_layout), ("widget_week", week_layout), ("widget_month", month_layout)]:
+    xml = build()
+    write(RES / "layout" / f"{name}.xml", xml)
+    write(RES / "layout" / f"{name}_shadow.xml", with_shadow(xml))
 
 write(RES / "xml" / "widget_agenda_info.xml", info("widget_list", "widget_agenda_desc", 250, 110, 4, 2))
 write(RES / "xml" / "widget_day_info.xml", info("widget_list", "widget_day_desc", 180, 110, 3, 2))
@@ -302,16 +317,19 @@ write(RES / "values" / "widget_strings.xml", """<?xml version="1.0" encoding="ut
 """)
 
 colors = {
-    "values": dict(bg="#FFFFFF", fg="#171B2B", fg2="#5A6378", accent="#3454D1", on_accent="#FFFFFF"),
-    "values-night": dict(bg="#1A1F2F", fg="#ECEFF8", fg2="#9CA5BC", accent="#93A5FF", on_accent="#0E1330"),
+    "values": dict(bg="#FFFFFF", bg_75="#BFFFFFFF", bg_50="#80FFFFFF",
+                   fg="#171B2B", fg2="#5A6378", accent="#3454D1", on_accent="#FFFFFF"),
+    "values-night": dict(bg="#1A1F2F", bg_75="#BF1A1F2F", bg_50="#801A1F2F",
+                         fg="#ECEFF8", fg2="#9CA5BC", accent="#93A5FF", on_accent="#0E1330"),
 }
 for folder, c in colors.items():
     body = "".join(f'    <color name="widget_{k}">{v}</color>\n' for k, v in c.items())
     write(RES / folder / "widget_colors.xml", f'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n{body}</resources>\n')
 
-write(RES / "drawable" / "widget_background.xml", f"""<?xml version="1.0" encoding="utf-8"?>
+for suffix in ["", "_75", "_50"]:
+    write(RES / "drawable" / f"widget_background{suffix}.xml", f"""<?xml version="1.0" encoding="utf-8"?>
 <shape {A} android:shape="rectangle">
-    <solid android:color="@color/widget_bg" />
+    <solid android:color="@color/widget_bg{suffix}" />
     <corners android:radius="24dp" />
 </shape>
 """)

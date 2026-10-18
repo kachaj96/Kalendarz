@@ -6,6 +6,7 @@ import '../domain/dates.dart';
 import '../domain/entry.dart';
 import '../domain/occurrence.dart';
 import '../providers_calendar.dart';
+import '../domain/maps_links.dart';
 import 'format.dart';
 import 'navigation.dart';
 
@@ -235,6 +236,10 @@ class EntryDetailScreen extends ConsumerWidget {
                 ? 'Przypomni tylko ten telefon.'
                 : 'Przypomnienie dostajecie oboje, każde na swoim telefonie.',
           ),
+          if (e.location.trim().isNotEmpty) ...[
+            const Divider(height: 1),
+            _LocationRow(location: e.location),
+          ],
           if (e.description.trim().isNotEmpty) ...[
             const Divider(height: 1),
             row(Icons.notes, e.description.trim()),
@@ -387,4 +392,79 @@ class _Badge extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Miejsce wpisu z przyciskami do Google Maps.
+class _LocationRow extends ConsumerWidget {
+  const _LocationRow({required this.location});
+
+  final String location;
+
+  Future<void> _open(BuildContext context, WidgetRef ref, Uri uri) async {
+    final ok = await ref
+        .read(urlOpenerProvider)(uri)
+        .catchError((Object _) => false);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nie udało się otworzyć Map.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.place_outlined, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SelectableText(
+                  locationLabel(location) == 'mapa'
+                      ? 'Miejsce z linku Google Maps'
+                      : location.trim(),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    FilledButton.icon(
+                      key: const Key('location-route'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                      ),
+                      icon: const Icon(Icons.directions, size: 18),
+                      label: const Text('Trasa'),
+                      onPressed: () =>
+                          _open(context, ref, directionsUri(location)),
+                    ),
+                    OutlinedButton.icon(
+                      key: const Key('location-map'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                      ),
+                      icon: const Icon(Icons.map_outlined, size: 18),
+                      label: const Text('Na mapie'),
+                      onPressed: () => _open(context, ref, mapUri(location)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

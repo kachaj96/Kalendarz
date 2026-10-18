@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import '../device/device_port.dart';
 import '../providers_calendar.dart';
+import '../settings/app_settings.dart';
 import 'invite_card.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -113,6 +114,7 @@ class SettingsScreen extends ConsumerWidget {
                 child: const Text('Rozłącz'),
               ),
           ]),
+          section('Wygląd', [const AppearanceSection()]),
           section('Przypomnienia i widżety', [const DeviceSection()]),
           section('Konto Google', [
             OutlinedButton(
@@ -323,6 +325,91 @@ class _DeviceSectionState extends ConsumerState<DeviceSection> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Motyw aplikacji oraz tło i tekst widżetów.
+class AppearanceSection extends ConsumerWidget {
+  const AppearanceSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(appSettingsProvider);
+    final notifier = ref.read(appSettingsProvider.notifier);
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget label(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+    );
+
+    Widget chips<T>(
+      List<(T, String)> options,
+      T selected,
+      void Function(T) onSelect,
+    ) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          for (final (value, text) in options)
+            ChoiceChip(
+              label: Text(text),
+              selected: value == selected,
+              onSelected: (_) => onSelect(value),
+            ),
+        ],
+      ),
+    );
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          label('Motyw aplikacji'),
+          chips<ThemeMode>(
+            const [
+              (ThemeMode.system, 'Jak w telefonie'),
+              (ThemeMode.light, 'Jasny'),
+              (ThemeMode.dark, 'Ciemny'),
+            ],
+            s.themeMode,
+            (v) => notifier.set(s.copyWith(themeMode: v)),
+          ),
+          label('Tło widżetów'),
+          chips<int>(
+            const [
+              (100, 'Pełne'),
+              (75, '75%'),
+              (50, '50%'),
+              (0, 'Przezroczyste'),
+            ],
+            s.widgetOpacity,
+            (v) => notifier.set(s.copyWith(widgetOpacity: v)),
+          ),
+          label('Tekst w widżetach'),
+          chips<WidgetTextMode>(
+            const [
+              (WidgetTextMode.auto, 'Jak motyw telefonu'),
+              (WidgetTextMode.light, 'Jasny'),
+              (WidgetTextMode.dark, 'Ciemny'),
+            ],
+            s.widgetText,
+            (v) => notifier.set(s.copyWith(widgetText: v)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            child: Text(
+              'Przy przezroczystym tle wybierz jasny tekst na ciemną tapetę albo ciemny na jasną. '
+              'Jasny tekst dostaje cień, żeby był czytelny na zdjęciu.',
+              style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

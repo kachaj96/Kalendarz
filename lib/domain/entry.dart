@@ -79,6 +79,7 @@ class Entry {
     required this.endDate,
     required this.categoryId,
     this.description = '',
+    this.location = '',
     this.allDay = false,
     this.startMinutes,
     this.endMinutes,
@@ -96,6 +97,9 @@ class Entry {
   final EntryType type;
   final String title;
   final String description;
+
+  /// Miejsce: adres, nazwa albo link z Google Maps (pusty, gdy brak).
+  final String location;
   final DateTime date;
   final DateTime endDate;
   final bool allDay;
@@ -121,6 +125,7 @@ class Entry {
     EntryType? type,
     String? title,
     String? description,
+    String? location,
     DateTime? date,
     DateTime? endDate,
     bool? allDay,
@@ -140,6 +145,7 @@ class Entry {
     type: type ?? this.type,
     title: title ?? this.title,
     description: description ?? this.description,
+    location: location ?? this.location,
     date: date ?? this.date,
     endDate: endDate ?? this.endDate,
     allDay: allDay ?? this.allDay,
@@ -161,6 +167,7 @@ class Entry {
     'type': type.name,
     'title': title,
     'description': description,
+    'location': location,
     'date': dateKey(date),
     'endDate': dateKey(endDate),
     'allDay': allDay,
@@ -182,6 +189,7 @@ class Entry {
     type: EntryType.values.byName(j['type'] as String),
     title: j['title'] as String,
     description: j['description'] as String? ?? '',
+    location: j['location'] as String? ?? '',
     date: parseDateKey(j['date'] as String),
     endDate: parseDateKey(j['endDate'] as String),
     allDay: j['allDay'] as bool? ?? false,

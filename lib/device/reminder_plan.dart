@@ -1,5 +1,6 @@
 import '../domain/dates.dart';
 import '../domain/entry.dart';
+import '../domain/maps_links.dart';
 import '../domain/occurrence.dart';
 
 /// Godzina, o której przypominamy o wpisach bez godziny (cały dzień, zadanie bez pory).
@@ -85,6 +86,9 @@ List<PlannedReminder> planReminders(Iterable<Entry> entries, DateTime now) {
           : (e.endMinutes == null
                 ? formatMinutes(e.startMinutes!)
                 : '${formatMinutes(e.startMinutes!)} - ${formatMinutes(e.endMinutes!)}');
+      final place = e.location.trim().isEmpty
+          ? ''
+          : ' · ${locationLabel(e.location)}';
       for (final offset in e.reminders.toSet()) {
         final at = start.subtract(Duration(minutes: offset));
         if (!at.isAfter(now)) continue;
@@ -94,7 +98,7 @@ List<PlannedReminder> planReminders(Iterable<Entry> entries, DateTime now) {
             id: stableId('${e.id}|${occ.key}|$offset'),
             at: at,
             title: e.title,
-            body: '${_dayPhrase(occ.startDate, at)}, $when',
+            body: '${_dayPhrase(occ.startDate, at)}, $when$place',
             entryId: e.id,
             occurrenceKey: occ.key,
           ),

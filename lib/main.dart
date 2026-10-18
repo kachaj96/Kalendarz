@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'device/background.dart';
 import 'firebase_config.dart';
+import 'settings/app_settings.dart';
 import 'ui/missing_config_screen.dart';
 
 Future<void> main() async {
@@ -23,5 +24,16 @@ Future<void> main() async {
   } catch (_) {
     // Brak synchronizacji w tle nie może blokować startu aplikacji.
   }
-  runApp(const ProviderScope(child: KalendarzApp()));
+  var settings = const AppSettings();
+  try {
+    settings = await PrefsSettingsStore().load();
+  } catch (_) {
+    // Bez zapisanych ustawień startujemy z domyślnymi.
+  }
+  runApp(
+    ProviderScope(
+      overrides: [initialSettingsProvider.overrideWithValue(settings)],
+      child: const KalendarzApp(),
+    ),
+  );
 }

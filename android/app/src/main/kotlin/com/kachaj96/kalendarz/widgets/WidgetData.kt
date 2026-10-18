@@ -20,6 +20,7 @@ data class Occ(
     val local: Boolean,
     val task: Boolean,
     val done: Boolean,
+    val place: String,
 ) {
     val allDay: Boolean get() = start < 0
 }
@@ -53,6 +54,7 @@ object WidgetData {
                     local = o.optBoolean("l"),
                     task = o.optBoolean("k"),
                     done = o.optBoolean("x"),
+                    place = o.optString("p", ""),
                 )
             }
         } catch (e: Exception) {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../domain/category.dart';
 import '../domain/dates.dart';
 import '../domain/entry.dart';
+import '../domain/maps_links.dart';
 import '../domain/occurrence.dart';
 
 /// Dni wstecz i w przód zapisywane dla widżetów. Widżet sam wybiera "dziś" z zegara telefonu,
@@ -32,6 +33,7 @@ String buildWidgetSnapshot(
         'l': e.isLocal,
         'k': e.isTask,
         'x': o.isDone,
+        'p': locationLabel(e.location),
       });
     }
   }

@@ -1,4 +1,5 @@
 import '../domain/category.dart';
+import '../settings/app_settings.dart' show WidgetTextMode;
 import '../domain/entry.dart';
 import '../space/models.dart';
 
@@ -50,6 +51,12 @@ abstract class DevicePort {
   /// Powiadomienie testowe: od razu albo po [delay] (sprawdza alarmy dokładne).
   Future<void> testNotification({Duration delay = Duration.zero});
 
+  /// Wygląd widżetów: krycie tła (100/75/50/0) i kolor tekstu. Odświeża wszystkie widżety.
+  Future<void> setWidgetStyle({
+    required int opacity,
+    required WidgetTextMode text,
+  });
+
   /// Adres, z którym aplikację otworzono z widżetu (np. kalendarz://open?tab=day&date=...).
   Future<Uri?> initialWidgetLaunch();
   Stream<Uri?> get widgetClicks;
@@ -95,6 +102,14 @@ class NoopDevicePort implements DevicePort {
 
   @override
   Future<void> testNotification({Duration delay = Duration.zero}) async {}
+
+  final widgetStyles = <(int, WidgetTextMode)>[];
+
+  @override
+  Future<void> setWidgetStyle({
+    required int opacity,
+    required WidgetTextMode text,
+  }) async => widgetStyles.add((opacity, text));
 
   @override
   Future<Uri?> initialWidgetLaunch() async => launchUri;

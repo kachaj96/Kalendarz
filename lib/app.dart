@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers.dart';
+import 'settings/app_settings.dart';
 import 'theme.dart';
 import 'ui/home_shell.dart';
 import 'ui/pairing_screen.dart';
@@ -10,18 +11,26 @@ import 'ui/sign_in_screen.dart';
 
 const _pl = Locale('pl');
 
-class KalendarzApp extends StatelessWidget {
+class KalendarzApp extends ConsumerWidget {
   const KalendarzApp({super.key});
 
   @override
-  Widget build(BuildContext context) => const AppShell(home: RootGate());
+  Widget build(BuildContext context, WidgetRef ref) => AppShell(
+    home: const RootGate(),
+    themeMode: ref.watch(appSettingsProvider.select((s) => s.themeMode)),
+  );
 }
 
 /// Wspólne ustawienia MaterialApp: polski język, motyw jasny i ciemny wg systemu.
 class AppShell extends StatelessWidget {
-  const AppShell({super.key, required this.home});
+  const AppShell({
+    super.key,
+    required this.home,
+    this.themeMode = ThemeMode.system,
+  });
 
   final Widget home;
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +39,7 @@ class AppShell extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       locale: _pl,
       supportedLocales: const [_pl],
       localizationsDelegates: const [

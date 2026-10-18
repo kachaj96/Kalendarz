@@ -26,10 +26,13 @@ class WeekWidget : HomeWidgetProvider() {
         val monday = WidgetData.mondayOf(today)
         val sunday = WidgetData.plusDays(monday, 6)
         val onAccent = WidgetData.color(context, R.color.widget_on_accent)
-        val fg = WidgetData.color(context, R.color.widget_fg)
+        val style = WidgetStyle.load(widgetData)
+        val fg = style.fg(context)
+        val fg2 = style.fg2(context)
 
         for (id in appWidgetIds) {
-            val views = RemoteViews(context.packageName, R.layout.widget_week)
+            val views = RemoteViews(context.packageName, style.layout(context, R.layout.widget_week, R.layout.widget_week_shadow))
+            style.apply(context, views)
             views.setTextViewText(R.id.w_title, "Ten tydzień")
             views.setTextViewText(
                 R.id.w_subtitle,
@@ -42,6 +45,8 @@ class WeekWidget : HomeWidgetProvider() {
                 val key = WidgetData.key(day)
                 val isToday = key == todayKey
                 views.setTextViewText(WidgetIds.weekName[d], WidgetData.weekdayShort[d])
+                views.setTextColor(WidgetIds.weekName[d], fg2)
+                views.setTextColor(WidgetIds.weekMore[d], fg2)
                 views.setTextViewText(WidgetIds.weekNum[d], day.get(Calendar.DAY_OF_MONTH).toString())
                 views.setInt(WidgetIds.weekNum[d], "setBackgroundResource", if (isToday) R.drawable.widget_today else 0)
                 views.setTextColor(WidgetIds.weekNum[d], if (isToday) onAccent else fg)
@@ -84,15 +89,20 @@ class MonthWidget : HomeWidgetProvider() {
         val weeks = (leading + daysInMonth + 6) / 7
         val start = WidgetData.plusDays(first, -leading)
         val onAccent = WidgetData.color(context, R.color.widget_on_accent)
-        val fg = WidgetData.color(context, R.color.widget_fg)
-        val fg2 = WidgetData.color(context, R.color.widget_fg2)
+        val style = WidgetStyle.load(widgetData)
+        val fg = style.fg(context)
+        val fg2 = style.fg2(context)
 
         for (id in appWidgetIds) {
-            val views = RemoteViews(context.packageName, R.layout.widget_month)
+            val views = RemoteViews(context.packageName, style.layout(context, R.layout.widget_month, R.layout.widget_month_shadow))
+            style.apply(context, views)
             views.setTextViewText(R.id.w_title, WidgetData.months[month])
             views.setTextViewText(R.id.w_subtitle, first.get(Calendar.YEAR).toString())
             views.setOnClickPendingIntent(R.id.w_root, WidgetData.launch(context, "month"))
-            for (c in 0 until 7) views.setTextViewText(WidgetIds.monthHeader[c], WidgetData.weekdayLetter[c])
+            for (c in 0 until 7) {
+                views.setTextViewText(WidgetIds.monthHeader[c], WidgetData.weekdayLetter[c])
+                views.setTextColor(WidgetIds.monthHeader[c], fg2)
+            }
             for (r in 0 until WidgetIds.MONTH_ROWS) {
                 views.setViewVisibility(WidgetIds.monthRow[r], if (r < weeks) View.VISIBLE else View.GONE)
                 if (r >= weeks) continue

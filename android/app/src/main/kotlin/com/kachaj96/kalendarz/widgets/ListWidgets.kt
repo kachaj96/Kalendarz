@@ -46,7 +46,11 @@ abstract class ListWidget : HomeWidgetProvider() {
     }
 
     private fun render(context: Context, manager: AppWidgetManager, id: Int, prefs: SharedPreferences) {
-        val views = RemoteViews(context.packageName, R.layout.widget_list)
+        val style = WidgetStyle.load(prefs)
+        val views = RemoteViews(context.packageName, style.layout(context, R.layout.widget_list, R.layout.widget_list_shadow))
+        style.apply(context, views)
+        val fg = style.fg(context)
+        val fg2 = style.fg2(context)
         views.setTextViewText(R.id.w_title, title())
         views.setTextViewText(R.id.w_subtitle, subtitle())
         views.setOnClickPendingIntent(R.id.w_root, WidgetData.launch(context, tab))
@@ -59,8 +63,8 @@ abstract class ListWidget : HomeWidgetProvider() {
             if (items == null) "Otwórz aplikację, żeby wczytać wpisy." else emptyText,
         )
 
+        views.setTextColor(R.id.w_empty, fg2)
         val accent = WidgetData.color(context, R.color.widget_accent)
-        val fg2 = WidgetData.color(context, R.color.widget_fg2)
         for (i in 0 until WidgetIds.LIST_ROWS) {
             val row = rows.getOrNull(i)
             views.setViewVisibility(WidgetIds.row[i], if (row == null) View.GONE else View.VISIBLE)
@@ -69,7 +73,9 @@ abstract class ListWidget : HomeWidgetProvider() {
             views.setTextColor(WidgetIds.rowTime[i], if (row.live) accent else fg2)
             views.setInt(WidgetIds.rowBar[i], "setBackgroundColor", row.color)
             views.setTextViewText(WidgetIds.rowTitle[i], row.title)
+            views.setTextColor(WidgetIds.rowTitle[i], fg)
             views.setTextViewText(WidgetIds.rowSub[i], row.sub)
+            views.setTextColor(WidgetIds.rowSub[i], fg2)
             views.setOnClickPendingIntent(WidgetIds.row[i], WidgetData.launch(context, "day", row.dayKey))
         }
         manager.updateAppWidget(id, views)
@@ -80,7 +86,10 @@ abstract class ListWidget : HomeWidgetProvider() {
     protected fun timeRange(o: Occ): String =
         if (o.allDay) "Cały dzień" else WidgetData.hm(o.start) + " - " + WidgetData.hm(if (o.end >= 1440) 0 else o.end)
 
-    protected fun withLocal(text: String, o: Occ): String = if (o.local) "$text · tylko ja" else text
+    protected fun withLocal(text: String, o: Occ): String {
+        val withPlace = if (o.place.isNotBlank()) "$text · ${o.place}" else text
+        return if (o.local) "$withPlace · tylko ja" else withPlace
+    }
 
     protected fun makeRow(time: String, o: Occ, sub: String, live: Boolean) =
         ListRow(time, titleOf(o), withLocal(sub, o), o.color, live, o.day)

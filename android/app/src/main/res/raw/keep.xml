@@ -2,4 +2,4 @@
 <!-- Zasoby wskazywane tylko nazwą z kodu Darta. Bez tego wersja wydaniowa je usuwa
      i moduł powiadomień nie startuje (brak ikonki). -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_stat_kalendarz,@mipmap/ic_launcher,@layout/widget_list,@layout/widget_week,@layout/widget_month,@drawable/widget_today,@drawable/widget_background" />
+    tools:keep="@drawable/ic_stat_kalendarz,@mipmap/ic_launcher,@layout/widget_list,@layout/widget_week,@layout/widget_month,@layout/widget_list_shadow,@layout/widget_week_shadow,@layout/widget_month_shadow,@drawable/widget_background_75,@drawable/widget_background_50,@drawable/widget_today,@drawable/widget_background" />
