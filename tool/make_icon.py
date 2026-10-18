@@ -1,4 +1,4 @@
-"""Generuje ikonę aplikacji (kartka kalendarza z kolorowymi kropkami kategorii).
+"""Generuje ikonę aplikacji: kartka kalendarza z ukośnych błękitnych kształtów (w stylu znaczka Flutter).
 
 Uruchom z katalogu głównego repozytorium: python3 tool/make_icon.py
 Wymaga Pillow. Pliki trafiają do android/app/src/main/res.
@@ -8,69 +8,75 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 RES = Path("android/app/src/main/res")
-BG = (52, 84, 209, 255)  # indygo z motywu aplikacji
-INK = (31, 47, 122, 255)
+BG = (255, 255, 255, 255)
+LIGHT = (84, 197, 248, 255)   # jasny błękit z palety Flutter
+MID = (41, 182, 246, 255)
+DARK = (1, 87, 155, 255)
+DEEP = (0, 60, 120, 255)
 WHITE = (255, 255, 255, 255)
-DOTS = [
-    (199, 95, 0),    # zakupy
-    (47, 111, 222),  # praca
-    (209, 52, 56),   # zdrowie
-    (94, 140, 10),   # sport
-    (123, 79, 208),  # rodzina
-    (18, 128, 138),  # dom
-]
 SS = 4  # supersampling
 
 
 def calendar(size, monochrome=False):
-    """Kartka kalendarza narysowana w obrębie środkowych 66% płótna (strefa bezpieczna ikon adaptacyjnych)."""
+    """Rysunek mieści się w środkowych ~66% płótna (strefa bezpieczna ikon adaptacyjnych)."""
     s = size * SS
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     u = s / 100.0
 
-    # Kartka: 30..70 w poziomie jest za wąskie, więc bierzemy 22..78 (56 jednostek) i 26..76 w pionie.
-    box = (22 * u, 27 * u, 78 * u, 77 * u)
-    ink = (0, 0, 0, 255) if monochrome else WHITE
-    d.rounded_rectangle(box, radius=7 * u, fill=ink)
+    k = 1.18  # powiększenie względem środka, nadal w strefie bezpiecznej
 
-    # Pasek nagłówka i dwa zaczepy.
+    def poly(points, fill):
+        d.polygon([((50 + (x - 50) * k) * u, (50 + (y - 52) * k + 2) * u) for x, y in points], fill=fill)
+
+    mono = (0, 0, 0, 255)
+    clear = (0, 0, 0, 0)
+
+    # Korpus kartki ze ściętym rogiem (zagięcie jak w znaczku Flutter).
+    poly([(23, 31), (77, 31), (77, 63), (62, 78), (23, 78)], mono if monochrome else LIGHT)
+    # Zagięty róg.
+    if not monochrome:
+        poly([(62, 78), (77, 63), (62, 63)], DARK)
+
+    # Ciemny nagłówek ze skośnym cięciem po prawej.
     if monochrome:
-        d.rectangle((22 * u, 40 * u, 78 * u, 41.6 * u), fill=(0, 0, 0, 0))
+        poly([(23, 31), (77, 31), (77, 43.2), (23, 43.2)], clear)
+        poly([(23, 31), (77, 31), (77, 41.6), (23, 41.6)], mono)
     else:
-        d.rounded_rectangle((22 * u, 27 * u, 78 * u, 41 * u), radius=7 * u, fill=INK)
-        d.rectangle((22 * u, 34 * u, 78 * u, 41 * u), fill=INK)
-    for x in (36, 64):
-        d.rounded_rectangle(
-            (x * u - 2.2 * u, 21.5 * u, x * u + 2.2 * u, 32 * u),
-            radius=2.2 * u,
-            fill=(0, 0, 0, 255) if monochrome else WHITE,
+        poly([(23, 31), (77, 31), (77, 43), (23, 43)], DARK)
+
+    # Dwa zaczepy jako skośne równoległoboki.
+    for x in (33, 61):
+        poly(
+            [(x, 24), (x + 6, 24), (x + 4, 36), (x - 2, 36)],
+            mono if monochrome else MID,
         )
 
-    # Siatka kropek w kolorach kategorii, pierwsza to "dzisiaj".
-    for i, color in enumerate(DOTS):
-        cx = (33 + (i % 3) * 17) * u
-        cy = (53 + (i // 3) * 15) * u
-        r = 5.2 * u
-        if monochrome:
-            d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(0, 0, 0, 0))
-        else:
-            if i == 0:
-                d.ellipse((cx - r - 1.6 * u, cy - r - 1.6 * u, cx + r + 1.6 * u, cy + r + 1.6 * u), fill=BG)
-                d.ellipse((cx - r + 1 * u, cy - r + 1 * u, cx + r - 1 * u, cy + r - 1 * u), fill=WHITE)
-                d.ellipse((cx - r + 2 * u, cy - r + 2 * u, cx + r - 2 * u, cy + r - 2 * u), fill=color + (255,))
+    # Siatka dni: białe kwadraty ze ściętym rogiem, pierwszy to "dzisiaj".
+    cols, rows = 3, 2
+    for r in range(rows):
+        for c in range(cols):
+            x = 30 + c * 14.5
+            y = 50 + r * 12
+            if r == rows - 1 and c == cols - 1:
+                continue  # tu zagięty róg
+            w = 9.5
+            cut = 2.6
+            pts = [(x, y), (x + w - cut, y), (x + w, y + cut), (x + w, y + w - 1), (x, y + w - 1)]
+            if monochrome:
+                poly(pts, clear)
             else:
-                d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=color + (255,))
+                poly(pts, DEEP if (r, c) == (0, 0) else WHITE)
     return img.resize((size, size), Image.LANCZOS)
 
 
 def legacy(size):
-    """Pełna ikona dla starszych Androidów (przed 8.0): zaokrąglony kwadrat z kartką."""
+    """Pełna ikona dla starszych Androidów (przed 8.0): biały zaokrąglony kwadrat z kartką."""
     s = size * SS
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((0, 0, s, s), radius=int(s * 0.22), fill=BG)
-    big = calendar(size * 2).resize((int(s * 1.0), int(s * 1.0)), Image.LANCZOS)
+    big = calendar(size * 2).resize((s, s), Image.LANCZOS)
     img.alpha_composite(big)
     return img.resize((size, size), Image.LANCZOS)
 
@@ -96,7 +102,7 @@ for name, scale in densities.items():
 (RES / "values" / "colors.xml").write_text(
     '<?xml version="1.0" encoding="utf-8"?>\n'
     "<resources>\n"
-    '    <color name="ic_launcher_background">#3454D1</color>\n'
+    '    <color name="ic_launcher_background">#FFFFFF</color>\n'
     "</resources>\n"
 )
 print("gotowe")
