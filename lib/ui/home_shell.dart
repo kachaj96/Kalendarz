@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/local_repository.dart';
+import '../device/device_port.dart';
 import '../domain/dates.dart';
 import '../providers.dart';
 import '../providers_calendar.dart';
@@ -42,6 +45,79 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   HomeTab _tab = HomeTab.agenda;
   late DateTime _selected = dateOnly(ref.read(clockProvider)());
+
+  Timer? _syncTimer;
+  StreamSubscription<Uri?>? _widgetClicks;
+  AppLifecycleListener? _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    final port = ref.read(devicePortProvider);
+    port.askPermissionsOnce().catchError((Object _) {});
+    port.initialWidgetLaunch().then(_openFromWidget).catchError((Object _) {});
+    _widgetClicks = port.widgetClicks.listen(
+      _openFromWidget,
+      onError: (Object _) {},
+    );
+    ref.listenManual(entriesProvider, (_, _) => _scheduleSync());
+    ref.listenManual(categoryByIdProvider, (_, _) => _scheduleSync());
+    _lifecycle = AppLifecycleListener(onResume: _scheduleSync);
+    _scheduleSync();
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    _widgetClicks?.cancel();
+    _lifecycle?.dispose();
+    super.dispose();
+  }
+
+  /// Zmiany przychodzą seriami (zapis, potem odpowiedź z bazy), więc czekamy chwilę na spokój.
+  void _scheduleSync() {
+    _syncTimer?.cancel();
+    _syncTimer = Timer(const Duration(milliseconds: 1500), _syncNow);
+  }
+
+  void _syncNow() {
+    if (!mounted) return;
+    // Bez kompletu danych alarmy i lista "widzianych" wpisów partnera byłyby niepełne.
+    if (!ref.read(localDataProvider).hasValue) return;
+    final sharedReady =
+        ref.read(currentSpaceIdProvider) == null ||
+        ref.read(sharedEntriesProvider).hasValue;
+    if (!sharedReady) return;
+    ref
+        .read(devicePortProvider)
+        .sync(
+          DeviceState(
+            entries: ref.read(entriesProvider),
+            categories: ref.read(categoryByIdProvider),
+            now: ref.read(clockProvider)(),
+            myUid: ref.read(currentUidProvider),
+            profiles: ref.read(memberProfilesProvider),
+          ),
+        )
+        .catchError((Object _) {});
+  }
+
+  /// Widżet otwiera aplikację adresem kalendarz://open?tab=day&date=2026-10-24.
+  void _openFromWidget(Uri? uri) {
+    if (uri == null || !mounted) return;
+    final tab = switch (uri.queryParameters['tab']) {
+      'day' => HomeTab.day,
+      'week' => HomeTab.week,
+      'month' => HomeTab.month,
+      _ => HomeTab.agenda,
+    };
+    final date = DateTime.tryParse(uri.queryParameters['date'] ?? '');
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    setState(() {
+      _tab = tab;
+      _selected = dateOnly(date ?? ref.read(clockProvider)());
+    });
+  }
 
   void _step(int direction) {
     setState(() {

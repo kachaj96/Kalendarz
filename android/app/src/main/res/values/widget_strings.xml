@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_name">Najbliższe</string>
+    <string name="widget_agenda_desc">Najbliższe wpisy z kalendarza</string>
+    <string name="widget_day_name">Dziś</string>
+    <string name="widget_day_desc">Dzisiejsze wpisy</string>
+    <string name="widget_week_name">Tydzień</string>
+    <string name="widget_week_desc">Bieżący tydzień w siedmiu kolumnach</string>
+    <string name="widget_month_name">Miesiąc</string>
+    <string name="widget_month_desc">Siatka miesiąca z kolorami kategorii</string>
+</resources>

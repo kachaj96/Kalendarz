@@ -650,8 +650,9 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       onTap: () => _change(() {
                         _local = false;
                         final cat = ref.read(categoryByIdProvider)[_categoryId];
-                        if (cat == null || cat.isLocal)
+                        if (cat == null || cat.isLocal) {
                           _categoryId = fallbackCategoryId;
+                        }
                       }),
                     ),
                   ),

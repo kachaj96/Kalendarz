@@ -99,10 +99,36 @@ for name, scale in densities.items():
     '    <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>\n'
     "</adaptive-icon>\n"
 )
-(RES / "values" / "colors.xml").write_text(
+(RES / "values" / "ic_launcher_colors.xml").write_text(
     '<?xml version="1.0" encoding="utf-8"?>\n'
     "<resources>\n"
     '    <color name="ic_launcher_background">#FFFFFF</color>\n'
     "</resources>\n"
 )
+
+
+def status_icon(size):
+    """Mała ikonka na pasku powiadomień: biała sylwetka kartki na przezroczystym tle."""
+    s = size * SS
+    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    u = s / 24.0
+    white = (255, 255, 255, 255)
+    d.rounded_rectangle((3 * u, 5 * u, 21 * u, 21 * u), radius=2 * u, fill=white)
+    d.rectangle((3 * u, 9.6 * u, 21 * u, 10.8 * u), fill=(0, 0, 0, 0))
+    for x in (8, 16):
+        d.rounded_rectangle((x * u - 1 * u, 2.5 * u, x * u + 1 * u, 7 * u), radius=1 * u, fill=white)
+    for r in range(2):
+        for c in range(3):
+            if (r, c) == (1, 2):
+                continue
+            x = 6 * u + c * 4.6 * u
+            y = 13 * u + r * 3.8 * u
+            d.rectangle((x, y, x + 2.6 * u, y + 2.4 * u), fill=(0, 0, 0, 0))
+    return img.resize((size, size), Image.LANCZOS)
+
+
+for name, scale in densities.items():
+    status_icon(int(24 * scale)).save(RES / f"drawable-{name}" / "ic_stat_kalendarz.png")
+
 print("gotowe")

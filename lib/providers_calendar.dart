@@ -3,10 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/local_repository.dart';
 import 'data/shared_store.dart';
+import 'device/android_device_port.dart';
+import 'device/device_port.dart';
 import 'domain/category.dart';
 import 'domain/entry.dart';
 import 'providers.dart';
 import 'space/models.dart';
+
+/// Alarmy, widżety i uprawnienia Androida. W testach podmieniane na wersję bez efektów.
+final devicePortProvider = Provider<DevicePort>((ref) => AndroidDevicePort());
 
 /// Aktualny czas. Osobny provider, żeby testy mogły go podmienić.
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);

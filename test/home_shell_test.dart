@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kalendarz/device/device_port.dart';
 import 'package:kalendarz/domain/entry.dart';
 import 'package:kalendarz/ui/home_shell.dart';
 import 'package:kalendarz/ui/missing_config_screen.dart';
@@ -201,5 +202,40 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Zrobione'));
     await tester.pumpAndSettle();
     expect(find.text('Zaległe'), findsNothing);
+  });
+
+  testWidgets('po zmianie wpisów telefon przelicza alarmy i widżety', (
+    tester,
+  ) async {
+    final device = NoopDevicePort();
+    await pumpHome(
+      tester,
+      device: device,
+      entries: [
+        makeEntry(
+          title: 'Kino',
+          date: DateTime(2026, 10, 24),
+          start: 1200,
+          end: 1350,
+        ),
+      ],
+    );
+    await tester.pump(const Duration(seconds: 2));
+    expect(device.syncs, isNotEmpty);
+    expect(device.syncs.last.entries.single.title, 'Kino');
+    expect(device.syncs.last.myUid, 'u1');
+  });
+
+  testWidgets('otwarcie z widżetu miesiąca pokazuje wskazany dzień', (
+    tester,
+  ) async {
+    final device = NoopDevicePort(
+      launchUri: Uri.parse('kalendarz://open?tab=day&date=2026-10-24'),
+    );
+    await pumpHome(tester, device: device);
+    expect(
+      (tester.widget<Text>(find.byKey(const Key('screen-title')))).data,
+      'Sobota',
+    );
   });
 }

@@ -6,6 +6,7 @@ import 'package:kalendarz/app.dart';
 import 'package:kalendarz/data/local_repository.dart';
 import 'package:kalendarz/data/local_store.dart';
 import 'package:kalendarz/data/shared_store.dart';
+import 'package:kalendarz/device/device_port.dart';
 import 'package:kalendarz/domain/category.dart';
 import 'package:kalendarz/domain/entry.dart';
 import 'package:kalendarz/providers_calendar.dart';
@@ -94,6 +95,7 @@ Future<TestStores> pumpHome(
   List<Category> categories = const [],
   List<SharedCategoryDoc> sharedCategories = const [],
   Space space = pairedSpace,
+  NoopDevicePort? device,
 }) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 3;
@@ -115,6 +117,7 @@ Future<TestStores> pumpHome(
         currentUidProvider.overrideWithValue('u1'),
         currentSpaceIdProvider.overrideWithValue(space.id),
         memberProfilesProvider.overrideWithValue(space.profiles),
+        devicePortProvider.overrideWithValue(device ?? NoopDevicePort()),
       ],
       child: AppShell(
         home: HomeShell(space: space, meUid: 'u1'),

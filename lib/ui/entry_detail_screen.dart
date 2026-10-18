@@ -349,8 +349,9 @@ class EntryDetailScreen extends ConsumerWidget {
 String _authorLine(Entry e, WidgetRef ref) {
   if (e.isLocal) return 'Zapisane tylko w tym telefonie. Partner go nie widzi.';
   final me = ref.read(currentUidProvider);
-  if (e.createdBy == null || e.createdBy == me)
+  if (e.createdBy == null || e.createdBy == me) {
     return 'Wpis wspólny, dodany przez ciebie.';
+  }
   final name = ref.read(memberProfilesProvider)[e.createdBy]?.name;
   return 'Wpis wspólny, dodał(a): ${name ?? 'partner'}.';
 }

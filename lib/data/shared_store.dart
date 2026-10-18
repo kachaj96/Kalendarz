@@ -50,6 +50,10 @@ abstract class SharedStore {
   Stream<List<Entry>> watchEntries(String spaceId);
   Stream<List<SharedCategoryDoc>> watchCategories(String spaceId);
 
+  /// Jednorazowy odczyt (praca w tle): najpierw serwer, a bez internetu pamięć podręczna.
+  Future<List<Entry>> fetchEntries(String spaceId);
+  Future<List<SharedCategoryDoc>> fetchCategories(String spaceId);
+
   /// Zapis całego wpisu. Przy edycji (`previous` != null) odhaczenia, zrobione dni i pominięcia
   /// są nadpisywane tylko wtedy, gdy formularz je zmienił, żeby nie skasować tego, co w tym
   /// czasie odhaczył partner.
@@ -127,17 +131,32 @@ class FirestoreSharedStore implements SharedStore {
 
   @override
   Stream<List<SharedCategoryDoc>> watchCategories(String spaceId) =>
-      _categories(spaceId).snapshots().map(
-        (s) => [
-          for (final d in s.docs)
-            SharedCategoryDoc(
-              id: d.id,
-              name: d.data()['name'] as String?,
-              color: d.data()['color'] as int?,
-              deleted: d.data()['deleted'] as bool? ?? false,
-            ),
-        ],
-      );
+      _categories(spaceId).snapshots().map(_categoryDocs);
+
+  @override
+  Future<List<Entry>> fetchEntries(String spaceId) async {
+    final s = await _entries(spaceId).get();
+    return [
+      for (final d in s.docs)
+        if (_tryParse(d.id, d.data()) case final Entry e) e,
+    ];
+  }
+
+  @override
+  Future<List<SharedCategoryDoc>> fetchCategories(String spaceId) async =>
+      _categoryDocs(await _categories(spaceId).get());
+
+  List<SharedCategoryDoc> _categoryDocs(
+    QuerySnapshot<Map<String, dynamic>> s,
+  ) => [
+    for (final d in s.docs)
+      SharedCategoryDoc(
+        id: d.id,
+        name: d.data()['name'] as String?,
+        color: d.data()['color'] as int?,
+        deleted: d.data()['deleted'] as bool? ?? false,
+      ),
+  ];
 
   @override
   Future<void> putEntry(String spaceId, Entry entry, {Entry? previous}) {
@@ -231,6 +250,14 @@ class MemorySharedStore implements SharedStore {
   @override
   Stream<List<SharedCategoryDoc>> watchCategories(String spaceId) =>
       _withCurrent(categories.values.toList(), _categoriesCtl.stream);
+
+  @override
+  Future<List<Entry>> fetchEntries(String spaceId) async =>
+      entries.values.toList();
+
+  @override
+  Future<List<SharedCategoryDoc>> fetchCategories(String spaceId) async =>
+      categories.values.toList();
 
   @override
   Future<void> putEntry(String spaceId, Entry entry, {Entry? previous}) async {

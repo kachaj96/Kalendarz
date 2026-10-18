@@ -62,8 +62,9 @@ class EntryActions {
     DateTime occurrenceStart,
     String itemId,
   ) async {
-    if (entry.isLocal)
+    if (entry.isLocal) {
       return _local.toggleCheck(entry.id, occurrenceStart, itemId);
+    }
     final key = dateKey(occurrenceStart);
     final store = _ref.read(sharedStoreProvider);
     final checked = {...?entry.checks[key]};
