@@ -10,12 +10,12 @@ class Profile {
   Map<String, dynamic> toMap() => {'name': name, 'email': email};
 
   factory Profile.fromMap(String uid, Map<String, dynamic> map) => Profile(
-        uid: uid,
-        name: (map['name'] as String?)?.trim().isNotEmpty == true
-            ? map['name'] as String
-            : (map['email'] as String? ?? ''),
-        email: map['email'] as String? ?? '',
-      );
+    uid: uid,
+    name: (map['name'] as String?)?.trim().isNotEmpty == true
+        ? map['name'] as String
+        : (map['email'] as String? ?? ''),
+    email: map['email'] as String? ?? '',
+  );
 }
 
 /// Wspólna przestrzeń dwóch osób. W dokumencie są oboje członkowie i aktualny kod zaproszenia.
@@ -44,13 +44,17 @@ class Space {
   factory Space.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> snap) {
     final data = snap.data() ?? const <String, dynamic>{};
     final rawProfiles =
-        (data['profiles'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (data['profiles'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
     return Space(
       id: snap.id,
       memberIds: List<String>.from(data['memberIds'] as List? ?? const []),
       profiles: {
         for (final e in rawProfiles.entries)
-          e.key: Profile.fromMap(e.key, Map<String, dynamic>.from(e.value as Map)),
+          e.key: Profile.fromMap(
+            e.key,
+            Map<String, dynamic>.from(e.value as Map),
+          ),
       },
       inviteCode: data['inviteCode'] as String?,
     );

@@ -19,7 +19,9 @@ class AuthRepository {
 
   Future<void> _initGoogle() async {
     if (_googleReady) return;
-    await _google.initialize(serverClientId: FirebaseConfig.googleServerClientId);
+    await _google.initialize(
+      serverClientId: FirebaseConfig.googleServerClientId,
+    );
     _googleReady = true;
   }
 

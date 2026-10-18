@@ -24,18 +24,18 @@ class SpaceRepository {
       _db.collection('invites').doc(code);
 
   Profile _profileOf(User user) => Profile(
-        uid: user.uid,
-        name: user.displayName ?? user.email ?? '',
-        email: user.email ?? '',
-      );
+    uid: user.uid,
+    name: user.displayName ?? user.email ?? '',
+    email: user.email ?? '',
+  );
 
-  Stream<String?> watchSpaceId(String uid) => _user(uid)
-      .snapshots()
-      .map((s) => s.data()?['spaceId'] as String?);
+  Stream<String?> watchSpaceId(String uid) =>
+      _user(uid).snapshots().map((s) => s.data()?['spaceId'] as String?);
 
-  Stream<Space?> watchSpace(String spaceId) => _space(spaceId).snapshots().map(
-        (s) => s.exists ? Space.fromSnapshot(s) : null,
-      );
+  Stream<Space?> watchSpace(String spaceId) =>
+      _space(spaceId)
+          .snapshots()
+          .map((s) => s.exists ? Space.fromSnapshot(s) : null);
 
   /// Zakłada wspólny kalendarz i zwraca kod zaproszenia dla drugiej osoby.
   /// Przestrzeń musi istnieć przed zaproszeniem, bo reguły sprawdzają członkostwo autora kodu.
@@ -98,7 +98,8 @@ class SpaceRepository {
       'memberIds': FieldValue.arrayRemove([myUid]),
       'profiles.$myUid': FieldValue.delete(),
     });
-    await _user(myUid).set({'spaceId': FieldValue.delete()}, SetOptions(merge: true));
+    await _user(myUid)
+        .set({'spaceId': FieldValue.delete()}, SetOptions(merge: true));
   }
 
   Future<String> _reserveInvite(String spaceId, String myUid) async {

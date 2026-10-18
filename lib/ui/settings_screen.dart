@@ -7,7 +7,12 @@ import 'invite_card.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  Future<void> _confirmLeave(BuildContext context, WidgetRef ref, String uid, String spaceId) async {
+  Future<void> _confirmLeave(
+    BuildContext context,
+    WidgetRef ref,
+    String uid,
+    String spaceId,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -17,8 +22,14 @@ class SettingsScreen extends ConsumerWidget {
           'Żeby wrócić, potrzebny będzie nowy kod od partnera.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Rozłącz')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Anuluj'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Rozłącz'),
+          ),
         ],
       ),
     );
@@ -35,26 +46,26 @@ class SettingsScreen extends ConsumerWidget {
     final partner = user == null ? null : space?.partnerOf(user.uid);
 
     Widget section(String title, List<Widget> children) => Padding(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                color: scheme.onSurfaceVariant,
               ),
-              ...children,
-            ],
+            ),
           ),
-        );
+          ...children,
+        ],
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Partner i ustawienia')),
@@ -84,7 +95,9 @@ class SettingsScreen extends ConsumerWidget {
             else if (space != null && user != null)
               InviteCard(
                 code: space.inviteCode,
-                onRenew: () => ref.read(spaceRepositoryProvider).renewInvite(space, user.uid),
+                onRenew: () => ref
+                    .read(spaceRepositoryProvider)
+                    .renewInvite(space, user.uid),
               ),
             const SizedBox(height: 12),
             if (space != null && user != null)
@@ -93,7 +106,8 @@ class SettingsScreen extends ConsumerWidget {
                   foregroundColor: scheme.error,
                   side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
                 ),
-                onPressed: () => _confirmLeave(context, ref, user.uid, space.id),
+                onPressed: () =>
+                    _confirmLeave(context, ref, user.uid, space.id),
                 child: const Text('Rozłącz'),
               ),
           ]),
@@ -110,8 +124,10 @@ class SettingsScreen extends ConsumerWidget {
             const Card(
               margin: EdgeInsets.zero,
               child: ListTile(
-                title: Text('Kalendarz 0.1'),
-                subtitle: Text('Dane wspólne wymagają internetu. Wpisy lokalne będą działać zawsze.'),
+                title: Text('Kalendarz 0.2'),
+                subtitle: Text(
+                  'Dane wspólne wymagają internetu. Wpisy lokalne będą działać zawsze.',
+                ),
               ),
             ),
           ]),

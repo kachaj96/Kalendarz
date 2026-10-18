@@ -34,7 +34,8 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
       await action();
     } on JoinException catch (e) {
       _error = switch (e.failure) {
-        JoinFailure.invalidCode => 'Taki kod nie istnieje albo został już użyty.',
+        JoinFailure.invalidCode =>
+          'Taki kod nie istnieje albo został już użyty.',
         JoinFailure.spaceFull => 'Ten kalendarz ma już dwie osoby.',
         JoinFailure.alreadyInSpace => 'Jesteś już w kalendarzu.',
       };
@@ -57,8 +58,12 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Połącz się z partnerem',
-                  style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Połącz się z partnerem',
+                style: text.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Jedna osoba zakłada wspólny kalendarz i dostaje kod. Druga wpisuje ten kod u siebie. Kod działa jeden raz.',
@@ -70,13 +75,17 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                   onPressed: _busy || user == null
                       ? null
                       : () => _run(() async {
-                            await ref.read(spaceRepositoryProvider).createSpace(user);
-                          }),
+                          await ref
+                              .read(spaceRepositoryProvider)
+                              .createSpace(user);
+                        }),
                   child: const Text('Załóż wspólny kalendarz'),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: _busy ? null : () => setState(() => _enterCode = true),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() => _enterCode = true),
                   child: const Text('Mam kod od partnera'),
                 ),
               ] else ...[
@@ -96,14 +105,18 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                 FilledButton(
                   onPressed: _busy || user == null
                       ? null
-                      : () => _run(() => ref
-                          .read(spaceRepositoryProvider)
-                          .joinWithCode(user, _code.text)),
+                      : () => _run(
+                          () => ref
+                              .read(spaceRepositoryProvider)
+                              .joinWithCode(user, _code.text),
+                        ),
                   child: const Text('Połącz'),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: _busy ? null : () => setState(() => _enterCode = false),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() => _enterCode = false),
                   child: const Text('Wróć'),
                 ),
               ],
@@ -118,8 +131,12 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
               const SizedBox(height: 40),
               Center(
                 child: TextButton(
-                  onPressed: _busy ? null : () => ref.read(authRepositoryProvider).signOut(),
-                  child: Text('Wyloguj${user?.email != null ? ' (${user!.email})' : ''}'),
+                  onPressed: _busy
+                      ? null
+                      : () => ref.read(authRepositoryProvider).signOut(),
+                  child: Text(
+                    'Wyloguj${user?.email != null ? ' (${user!.email})' : ''}',
+                  ),
                 ),
               ),
             ],

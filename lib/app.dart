@@ -52,7 +52,8 @@ class RootGate extends ConsumerWidget {
     final auth = ref.watch(authStateProvider);
     return auth.when(
       loading: () => const _Splash(),
-      error: (e, _) => _ErrorView(message: 'Nie udało się sprawdzić logowania.\n$e'),
+      error: (e, _) =>
+          _ErrorView(message: 'Nie udało się sprawdzić logowania.\n$e'),
       data: (user) {
         if (user == null) return const SignInScreen();
 
@@ -65,7 +66,9 @@ class RootGate extends ConsumerWidget {
           loading: () => const _Splash(),
           // Brak dostępu do przestrzeni (np. po rozłączeniu) oznacza ponowne parowanie.
           error: (_, _) => const PairingScreen(),
-          data: (s) => s == null ? const PairingScreen() : HomeShell(space: s, meUid: user.uid),
+          data: (s) => s == null
+              ? const PairingScreen()
+              : HomeShell(space: s, meUid: user.uid),
         );
       },
     );
@@ -87,11 +90,11 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(message, textAlign: TextAlign.center),
-          ),
-        ),
-      );
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(message, textAlign: TextAlign.center),
+      ),
+    ),
+  );
 }

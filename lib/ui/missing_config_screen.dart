@@ -7,7 +7,8 @@ class MissingConfigApp extends StatelessWidget {
   const MissingConfigApp({super.key});
 
   @override
-  Widget build(BuildContext context) => const AppShell(home: MissingConfigScreen());
+  Widget build(BuildContext context) =>
+      const AppShell(home: MissingConfigScreen());
 }
 
 class MissingConfigScreen extends StatelessWidget {
@@ -24,8 +25,11 @@ class MissingConfigScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.settings_suggest_outlined,
-                  size: 40, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.settings_suggest_outlined,
+                size: 40,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text('Brak konfiguracji Firebase', style: t.headlineSmall),
               const SizedBox(height: 12),

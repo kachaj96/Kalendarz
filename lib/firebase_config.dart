@@ -7,9 +7,12 @@ class FirebaseConfig {
   static const appId = String.fromEnvironment('FIREBASE_APP_ID');
   static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
   static const senderId = String.fromEnvironment('FIREBASE_SENDER_ID');
-  static const storageBucket = String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
-  static const googleServerClientId =
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  static const storageBucket = String.fromEnvironment(
+    'FIREBASE_STORAGE_BUCKET',
+  );
+  static const googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
 
   static bool get isConfigured =>
       apiKey.isNotEmpty &&
@@ -19,10 +22,10 @@ class FirebaseConfig {
       googleServerClientId.isNotEmpty;
 
   static FirebaseOptions get options => const FirebaseOptions(
-        apiKey: apiKey,
-        appId: appId,
-        messagingSenderId: senderId,
-        projectId: projectId,
-        storageBucket: storageBucket,
-      );
+    apiKey: apiKey,
+    appId: appId,
+    messagingSenderId: senderId,
+    projectId: projectId,
+    storageBucket: storageBucket,
+  );
 }

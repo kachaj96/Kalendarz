@@ -24,8 +24,10 @@ class InviteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Czekasz na partnera. Przekaż mu ten kod:',
-              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+          Text(
+            'Czekasz na partnera. Przekaż mu ten kod:',
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 12),
           Center(
             child: SelectableText(
@@ -42,12 +44,15 @@ class InviteCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                   onPressed: code == null
                       ? null
                       : () async {
                           await Clipboard.setData(
-                              ClipboardData(text: formatInviteCode(code!)));
+                            ClipboardData(text: formatInviteCode(code!)),
+                          );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Skopiowano kod')),
@@ -61,7 +66,9 @@ class InviteCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                    ),
                     onPressed: onRenew,
                     child: const Text('Nowy kod'),
                   ),

@@ -10,7 +10,11 @@ void main() {
       for (var i = 0; i < 500; i++) {
         final code = generateInviteCode(rnd);
         expect(code.length, 8);
-        expect(RegExp(r'^[A-HJ-NP-Z2-9]{8}$').hasMatch(code), isTrue, reason: code);
+        expect(
+          RegExp(r'^[A-HJ-NP-Z2-9]{8}$').hasMatch(code),
+          isTrue,
+          reason: code,
+        );
       }
     });
 

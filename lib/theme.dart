@@ -6,29 +6,29 @@ class AppTheme {
   static const _darkPrimary = Color(0xFF93A5FF);
 
   static ThemeData light() => _build(
-        ColorScheme.fromSeed(
-          seedColor: _lightPrimary,
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: _lightPrimary,
-          surface: Colors.white,
-          surfaceContainerLowest: const Color(0xFFF5F6FA),
-        ),
-        const Color(0xFFF5F6FA),
-      );
+    ColorScheme.fromSeed(
+      seedColor: _lightPrimary,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: _lightPrimary,
+      surface: Colors.white,
+      surfaceContainerLowest: const Color(0xFFF5F6FA),
+    ),
+    const Color(0xFFF5F6FA),
+  );
 
   static ThemeData dark() => _build(
-        ColorScheme.fromSeed(
-          seedColor: _darkPrimary,
-          brightness: Brightness.dark,
-        ).copyWith(
-          primary: _darkPrimary,
-          onPrimary: const Color(0xFF0E1330),
-          surface: const Color(0xFF1A1F2F),
-          surfaceContainerLowest: const Color(0xFF10131E),
-        ),
-        const Color(0xFF10131E),
-      );
+    ColorScheme.fromSeed(
+      seedColor: _darkPrimary,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: _darkPrimary,
+      onPrimary: const Color(0xFF0E1330),
+      surface: const Color(0xFF1A1F2F),
+      surfaceContainerLowest: const Color(0xFF10131E),
+    ),
+    const Color(0xFF10131E),
+  );
 
   static ThemeData _build(ColorScheme scheme, Color background) {
     return ThemeData(
@@ -51,21 +51,37 @@ class AppTheme {
         backgroundColor: scheme.surface,
         indicatorColor: scheme.primary.withValues(alpha: 0.16),
         labelTextStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+          TextStyle(
+            fontFamily: 'Figtree',
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Figtree',
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Figtree',
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -25,7 +25,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     } on SignInCancelled {
       // Użytkownik się rozmyślił, nic nie pokazujemy.
     } catch (e) {
-      _error = 'Logowanie się nie udało. Sprawdź internet i spróbuj ponownie.\n($e)';
+      _error =
+          'Logowanie się nie udało. Sprawdź internet i spróbuj ponownie.\n($e)';
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -49,11 +50,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   color: scheme.primary,
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(Icons.calendar_month_rounded,
-                    color: scheme.onPrimary, size: 30),
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  color: scheme.onPrimary,
+                  size: 30,
+                ),
               ),
               const SizedBox(height: 24),
-              Text('Kalendarz', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Kalendarz',
+                style: text.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Wspólny kalendarz dla dwóch osób. Wpisy widzicie oboje, a to, co chcesz zachować dla siebie, zostaje na twoim telefonie.',

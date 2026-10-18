@@ -2,7 +2,7 @@
 
 Wspólny kalendarz i planer dla dwóch osób na Androida. Wpisy wspólne widzicie oboje, wpisy lokalne zostają tylko na jednym telefonie. Aplikacja jest po polsku.
 
-Stan: **etap 1** - szkielet aplikacji, logowanie kontem Google i parowanie z partnerem kodem. Widoki kalendarza, wpisy, kategorie, powtarzanie, przypomnienia i widżety dochodzą w kolejnych etapach.
+Stan: **etap 2**. Działa logowanie kontem Google, parowanie z partnerem kodem, widoki Najbliższe / Dzień / Tydzień / Miesiąc, dodawanie i edycja wpisów (wydarzenia i zadania, cały dzień albo godziny, powtarzanie, listy punktów do odhaczania, kategorie z kolorami) oraz własne kategorie. Wpisy są na razie tylko lokalne, w pamięci telefonu. Współdzielenie wpisów z partnerem, przypomnienia i widżety dochodzą w kolejnych etapach.
 
 - `mockup/index.html` - klikalna makieta (wybrana wersja A)
 - `lib/` - aplikacja Flutter
