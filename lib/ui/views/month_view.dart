@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/local_repository.dart';
+import '../../data/entry_actions.dart';
 import '../../domain/dates.dart';
 import '../../domain/occurrence.dart';
 import '../../providers_calendar.dart';
@@ -27,7 +27,7 @@ class MonthView extends ConsumerWidget {
     final entries = ref.watch(entriesProvider);
     final now = ref.watch(clockProvider)();
     final scheme = Theme.of(context).colorScheme;
-    final notifier = ref.read(localDataProvider.notifier);
+    final actions = ref.read(entryActionsProvider);
 
     final first = DateTime(selected.year, selected.month, 1);
     final leading = first.weekday - 1;
@@ -227,7 +227,7 @@ class MonthView extends ConsumerWidget {
                     occurrence: o,
                     onTap: () => openOccurrence(context, o),
                     onToggleDone: () =>
-                        notifier.toggleDone(o.entry.id, o.startDate),
+                        actions.toggleDone(o.entry, o.startDate),
                   ),
               ],
             ),

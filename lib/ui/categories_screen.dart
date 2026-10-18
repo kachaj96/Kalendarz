@@ -2,26 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../data/local_repository.dart';
+import '../data/entry_actions.dart';
 import '../domain/category.dart';
 import '../providers_calendar.dart';
 
-/// Okno tworzenia i edycji kategorii: nazwa i jeden z 12 kolorów.
+/// Okno tworzenia i edycji kategorii: nazwa, jeden z 12 kolorów i (przy nowej) zasięg.
 /// Zwraca zapisaną kategorię albo null po anulowaniu.
 Future<Category?> showCategoryDialog(
   BuildContext context, {
   Category? existing,
+  bool local = false,
+  bool lockScope = false,
+  bool sharedAvailable = true,
 }) {
   return showDialog<Category>(
     context: context,
-    builder: (_) => _CategoryDialog(existing: existing),
+    builder: (_) => _CategoryDialog(
+      existing: existing,
+      initialLocal: existing?.isLocal ?? (local || !sharedAvailable),
+      canChooseScope: existing == null && !lockScope && sharedAvailable,
+    ),
   );
 }
 
 class _CategoryDialog extends StatefulWidget {
-  const _CategoryDialog({this.existing});
+  const _CategoryDialog({
+    this.existing,
+    required this.initialLocal,
+    required this.canChooseScope,
+  });
 
   final Category? existing;
+  final bool initialLocal;
+  final bool canChooseScope;
 
   @override
   State<_CategoryDialog> createState() => _CategoryDialogState();
@@ -32,6 +45,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     text: widget.existing?.name ?? '',
   );
   late int _color = widget.existing?.color ?? categoryPalette.first;
+  late bool _local = widget.initialLocal;
   String? _error;
 
   @override
@@ -52,7 +66,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
           id: const Uuid().v4(),
           name: name,
           color: _color,
-          isLocal: true,
+          isLocal: _local,
         );
     Navigator.of(context).pop(base.copyWith(name: name, color: _color));
   }
@@ -70,6 +84,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
+              key: const Key('category-name'),
               controller: _name,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
@@ -113,18 +128,39 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            if (widget.canChooseScope)
+              SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: false,
+                    icon: Icon(Icons.people_outline),
+                    label: Text('Wspólna'),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    icon: Icon(Icons.lock_outline),
+                    label: Text('Lokalna'),
+                  ),
+                ],
+                selected: {_local},
+                onSelectionChanged: (s) => setState(() => _local = s.first),
+              ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(
-                  Icons.lock_outline,
+                  _local ? Icons.lock_outline : Icons.people_outline,
                   size: 16,
                   color: scheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Kategoria lokalna: tylko na tym telefonie i tylko dla wpisów lokalnych.',
+                    _local
+                        ? 'Lokalna: tylko na tym telefonie i tylko dla wpisów lokalnych.'
+                        : 'Wspólna: widzi ją partner, oboje możecie jej używać i ją zmieniać.',
                     style: TextStyle(
                       fontSize: 12.5,
                       color: scheme.onSurfaceVariant,
@@ -159,7 +195,8 @@ class CategoriesScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final entries = ref.watch(entriesProvider);
     final cats = ref.watch(categoriesProvider);
-    final notifier = ref.read(localDataProvider.notifier);
+    final actions = ref.read(entryActionsProvider);
+    final sharedAvailable = ref.watch(currentSpaceIdProvider) != null;
     final shared = cats.where((c) => !c.isLocal).toList();
     final local = cats.where((c) => c.isLocal).toList();
 
@@ -185,96 +222,99 @@ class CategoriesScreen extends ConsumerWidget {
       ),
     );
 
-    Widget tile(Category c, {bool editable = false}) => ListTile(
-      leading: CircleAvatar(radius: 8, backgroundColor: Color(c.color)),
-      title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text('${countFor(c)} wpisów'),
-      trailing: editable
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'Edytuj ${c.name}',
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () async {
-                    final updated = await showCategoryDialog(
-                      context,
-                      existing: c,
-                    );
-                    if (updated != null) await notifier.upsertCategory(updated);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Usuń ${c.name}',
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () async {
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: Text('Usunąć kategorię „${c.name}”?'),
-                        content: const Text(
-                          'Jej wpisy przejdą do kategorii „Inne”.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Anuluj'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Usuń'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (ok == true) await notifier.deleteCategory(c.id);
-                  },
-                ),
-              ],
-            )
-          : null,
-    );
+    Future<void> confirmDelete(Category c) async {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Usunąć kategorię „${c.name}”?'),
+          content: Text(
+            c.isLocal ? 'Jej wpisy przejdą do kategorii „Inne”.' : 'Zniknie też u partnera. Wpisy z tej kategorii przejdą do „Inne”.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Anuluj'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Usuń'),
+            ),
+          ],
+        ),
+      );
+      if (ok == true) await actions.deleteCategory(c);
+    }
+
+    Widget tile(Category c) {
+      final editable = c.isLocal || sharedAvailable;
+      return ListTile(
+        leading: CircleAvatar(radius: 8, backgroundColor: Color(c.color)),
+        title: Text(
+          c.name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text('${countFor(c)} wpisów'),
+        trailing: editable
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Edytuj ${c.name}',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () async {
+                      final updated = await showCategoryDialog(
+                        context,
+                        existing: c,
+                      );
+                      if (updated != null) await actions.saveCategory(updated);
+                    },
+                  ),
+                  if (c.id != fallbackCategoryId)
+                    IconButton(
+                      tooltip: 'Usuń ${c.name}',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => confirmDelete(c),
+                    ),
+                ],
+              )
+            : null,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Kategorie')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 32),
         children: [
-          header(Icons.people_outline, 'Wspólne'),
+          header(Icons.people_outline, 'Wspólne - widzi je partner'),
           Card(
             margin: EdgeInsets.zero,
             child: Column(children: [for (final c in shared) tile(c)]),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-            child: Text(
-              'Kategorie wspólne będzie można dodawać i zmieniać po włączeniu współdzielenia wpisów.',
-              style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
-            ),
           ),
           header(Icons.lock_outline, 'Lokalne - tylko ten telefon'),
           if (local.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
-                'Nie masz jeszcze własnych kategorii.',
+                'Nie masz jeszcze własnych kategorii lokalnych.',
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
             )
           else
             Card(
               margin: EdgeInsets.zero,
-              child: Column(
-                children: [for (final c in local) tile(c, editable: true)],
-              ),
+              child: Column(children: [for (final c in local) tile(c)]),
             ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             icon: const Icon(Icons.add),
             label: const Text('Nowa kategoria'),
             onPressed: () async {
-              final created = await showCategoryDialog(context);
-              if (created != null) await notifier.upsertCategory(created);
+              final created = await showCategoryDialog(
+                context,
+                sharedAvailable: sharedAvailable,
+              );
+              if (created != null) await actions.saveCategory(created);
             },
           ),
         ],

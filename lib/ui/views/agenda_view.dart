@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/local_repository.dart';
+import '../../data/entry_actions.dart';
 import '../../domain/dates.dart';
 import '../../domain/occurrence.dart';
 import '../../providers_calendar.dart';
@@ -23,7 +23,7 @@ class AgendaView extends ConsumerWidget {
     final today = dateOnly(ref.watch(clockProvider)());
     final overdue = overdueOccurrences(entries, today);
     final scheme = Theme.of(context).colorScheme;
-    final notifier = ref.read(localDataProvider.notifier);
+    final actions = ref.read(entryActionsProvider);
 
     Widget tile(Occurrence o, {String? label, bool isOverdue = false}) =>
         EntryTile(
@@ -31,7 +31,7 @@ class AgendaView extends ConsumerWidget {
           timeLabel: label,
           overdue: isOverdue,
           onTap: () => openOccurrence(context, o),
-          onToggleDone: () => notifier.toggleDone(o.entry.id, o.startDate),
+          onToggleDone: () => actions.toggleDone(o.entry, o.startDate),
         );
 
     final children = <Widget>[...header];

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/dates.dart';
+import '../../domain/entry.dart';
 import '../../domain/occurrence.dart';
 import '../../providers_calendar.dart';
 import '../format.dart';
@@ -43,6 +44,8 @@ class EntryTile extends ConsumerWidget {
 
     final meta = <Widget>[
       if (e.isLocal) _MetaIcon(Icons.lock_outline, 'Tylko na tym telefonie'),
+      if (partnerInitial(ref, e) case final String initial)
+        _PartnerBadge(initial),
       if (e.isRecurring) _MetaIcon(Icons.repeat, 'Powtarza się'),
       if (e.checklist.isNotEmpty)
         _MetaText(
@@ -184,6 +187,42 @@ class EntryTile extends ConsumerWidget {
       fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
+}
+
+/// Inicjał partnera dla wspólnego wpisu, który dodał partner. Null dla własnych i lokalnych.
+String? partnerInitial(WidgetRef ref, Entry e) {
+  if (e.isLocal || e.createdBy == null) return null;
+  if (e.createdBy == ref.read(currentUidProvider)) return null;
+  final name = ref.read(memberProfilesProvider)[e.createdBy]?.name ?? '';
+  return name.isEmpty ? 'P' : name.characters.first.toUpperCase();
+}
+
+class _PartnerBadge extends StatelessWidget {
+  const _PartnerBadge(this.initial);
+
+  final String initial;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Dodane przez partnera',
+    child: Container(
+      width: 17,
+      height: 17,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Color(0xFFC93C7B),
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ),
+  );
 }
 
 class _TaskCheck extends StatelessWidget {

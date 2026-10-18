@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:kalendarz/app.dart';
 import 'package:kalendarz/data/local_repository.dart';
 import 'package:kalendarz/data/local_store.dart';
+import 'package:kalendarz/data/shared_store.dart';
 import 'package:kalendarz/domain/category.dart';
 import 'package:kalendarz/domain/entry.dart';
 import 'package:kalendarz/providers_calendar.dart';
@@ -77,25 +78,43 @@ Entry makeEntry({
   isLocal: local,
 );
 
-/// Uruchamia główny ekran z zadanymi wpisami i zwraca magazyn, żeby testy mogły zajrzeć do zapisanych danych.
-Future<MemoryLocalStore> pumpHome(
+class TestStores {
+  TestStores(this.local, this.shared);
+
+  final MemoryLocalStore local;
+  final MemorySharedStore shared;
+}
+
+/// Uruchamia główny ekran z zadanymi wpisami i zwraca oba magazyny (telefon i wspólna baza),
+/// żeby testy mogły zajrzeć do zapisanych danych. Zalogowany jest u1.
+Future<TestStores> pumpHome(
   WidgetTester tester, {
   List<Entry> entries = const [],
+  List<Entry> sharedEntries = const [],
   List<Category> categories = const [],
+  List<SharedCategoryDoc> sharedCategories = const [],
   Space space = pairedSpace,
 }) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
 
-  final store = MemoryLocalStore(
+  final local = MemoryLocalStore(
     LocalData(entries: entries, categories: categories),
+  );
+  final shared = MemorySharedStore(
+    entries: sharedEntries,
+    categories: sharedCategories,
   );
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        localStoreProvider.overrideWithValue(store),
+        localStoreProvider.overrideWithValue(local),
+        sharedStoreProvider.overrideWithValue(shared),
         clockProvider.overrideWithValue(() => testNow),
+        currentUidProvider.overrideWithValue('u1'),
+        currentSpaceIdProvider.overrideWithValue(space.id),
+        memberProfilesProvider.overrideWithValue(space.profiles),
       ],
       child: AppShell(
         home: HomeShell(space: space, meUid: 'u1'),
@@ -103,5 +122,5 @@ Future<MemoryLocalStore> pumpHome(
     ),
   );
   await tester.pumpAndSettle();
-  return store;
+  return TestStores(local, shared);
 }

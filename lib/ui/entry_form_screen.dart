@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../data/local_repository.dart';
+import '../data/entry_actions.dart';
 import '../domain/category.dart';
 import '../domain/dates.dart';
 import '../domain/entry.dart';
@@ -74,6 +74,8 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (e == null) {
       final now = ref.read(clockProvider)();
       final base = dateOnly(widget.initialDate ?? now);
+      // Domyślnie wpis wspólny, o ile jest wspólny kalendarz.
+      _local = ref.read(currentSpaceIdProvider) == null;
       _startDate = base;
       _endDate = base;
       if (sameDay(base, now)) {
@@ -193,10 +195,43 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   }
 
   Future<void> _newCategory() async {
-    final created = await showCategoryDialog(context);
+    final created = await showCategoryDialog(
+      context,
+      local: _local,
+      lockScope: true,
+    );
     if (created == null) return;
-    await ref.read(localDataProvider.notifier).upsertCategory(created);
+    await ref.read(entryActionsProvider).saveCategory(created);
     _change(() => _categoryId = created.id);
+  }
+
+  /// Wspólny wpis zamieniony na lokalny zniknie partnerowi, więc pytamy.
+  Future<void> _makeLocal() async {
+    if (_local) return;
+    final wasShared = widget.entry != null && !widget.entry!.isLocal;
+    if (wasShared) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Zrobić wpis tylko dla siebie?'),
+          content: const Text(
+            'Po zapisaniu partner przestanie go widzieć, a wpis zostanie tylko na tym telefonie.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Anuluj'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Tak, tylko ja'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    _change(() => _local = true);
   }
 
   void _addItem() {
@@ -294,7 +329,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   Future<void> _save() async {
     final entry = _build();
     if (entry == null) return;
-    await ref.read(localDataProvider.notifier).upsertEntry(entry);
+    await ref.read(entryActionsProvider).save(entry, previous: widget.entry);
     if (!mounted) return;
     setState(() => _dirty = false);
     Navigator.of(context).pop();
@@ -472,7 +507,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'Przypomnienia zapisują się już teraz, ale zaczną dzwonić w jednym z kolejnych etapów.',
+                      _local ? 'Przypomni tylko ten telefon.' : 'Partner dostanie to samo przypomnienie na swoim telefonie.',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: scheme.onSurfaceVariant,
@@ -609,10 +644,15 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     child: _VisibilityCard(
                       icon: Icons.people_outline,
                       title: 'Wspólny',
-                      subtitle: 'Dostępne po włączeniu współdzielenia.',
-                      selected: false,
-                      enabled: false,
-                      onTap: () {},
+                      subtitle: 'Partner widzi, może edytować i dostaje przypomnienie.',
+                      selected: !_local,
+                      enabled: ref.watch(currentSpaceIdProvider) != null,
+                      onTap: () => _change(() {
+                        _local = false;
+                        final cat = ref.read(categoryByIdProvider)[_categoryId];
+                        if (cat == null || cat.isLocal)
+                          _categoryId = fallbackCategoryId;
+                      }),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -620,9 +660,9 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     child: _VisibilityCard(
                       icon: Icons.lock_outline,
                       title: 'Tylko ja',
-                      subtitle: 'Zostaje w pamięci tego telefonu.',
+                      subtitle: 'Zostaje w pamięci tego telefonu. Bez kopii zapasowej.',
                       selected: _local,
-                      onTap: () => _change(() => _local = true),
+                      onTap: _makeLocal,
                     ),
                   ),
                 ],

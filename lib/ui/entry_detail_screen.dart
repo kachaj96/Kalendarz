@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/local_repository.dart';
+import '../data/entry_actions.dart';
 import '../domain/dates.dart';
 import '../domain/entry.dart';
 import '../domain/occurrence.dart';
@@ -60,7 +60,7 @@ class EntryDetailScreen extends ConsumerWidget {
 
     final e = entry;
     final scheme = Theme.of(context).colorScheme;
-    final notifier = ref.read(localDataProvider.notifier);
+    final actions = ref.read(entryActionsProvider);
     final now = ref.watch(clockProvider)();
     final cat = ref.watch(categoryByIdProvider)[e.categoryId];
     final color = Color(cat?.color ?? 0xFF5F6B80);
@@ -199,7 +199,7 @@ class EntryDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => notifier.toggleDone(e.id, occ.startDate),
+                    onPressed: () => actions.toggleDone(e, occ.startDate),
                     child: const Text('Odhacz'),
                   ),
                 ],
@@ -213,7 +213,7 @@ class EntryDetailScreen extends ConsumerWidget {
                 ? Checkbox(
                     shape: const CircleBorder(),
                     value: occ.isDone,
-                    onChanged: (_) => notifier.toggleDone(e.id, occ.startDate),
+                    onChanged: (_) => actions.toggleDone(e, occ.startDate),
                   )
                 : null,
           ),
@@ -231,7 +231,9 @@ class EntryDetailScreen extends ConsumerWidget {
             e.reminders.isEmpty
                 ? 'Bez przypomnienia'
                 : (e.reminders.toList()..sort()).map(reminderLabel).join(', '),
-            sub: 'Przypomnienia zaczną działać w jednym z kolejnych etapów.',
+            sub: e.isLocal
+                ? 'Przypomni tylko ten telefon.'
+                : 'Przypomnienie dostajecie oboje, każde na swoim telefonie.',
           ),
           if (e.description.trim().isNotEmpty) ...[
             const Divider(height: 1),
@@ -277,7 +279,7 @@ class EntryDetailScreen extends ConsumerWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                 value: occ.checkedItems.contains(item.id),
                 onChanged: (_) =>
-                    notifier.toggleCheck(e.id, occ.startDate, item.id),
+                    actions.toggleCheck(e, occ.startDate, item.id),
                 title: Text(
                   item.text,
                   style: TextStyle(
@@ -294,7 +296,7 @@ class EntryDetailScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
             child: Text(
-              e.isLocal ? 'Zapisane tylko w tym telefonie.' : 'Wpis wspólny.',
+              _authorLine(e, ref),
               style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
             ),
           ),
@@ -306,7 +308,7 @@ class EntryDetailScreen extends ConsumerWidget {
                 if (e.isRecurring) ...[
                   OutlinedButton(
                     onPressed: () async {
-                      await notifier.skipOccurrence(e.id, occ.startDate);
+                      await actions.skip(e, occ.startDate);
                       if (context.mounted) Navigator.of(context).pop();
                     },
                     child: const Text('Pomiń ten dzień'),
@@ -330,7 +332,7 @@ class EntryDetailScreen extends ConsumerWidget {
                       'Usuń',
                     );
                     if (!ok) return;
-                    await notifier.deleteEntry(e.id);
+                    await actions.delete(e);
                     if (context.mounted) Navigator.of(context).pop();
                   },
                   child: Text(e.isRecurring ? 'Usuń całą serię' : 'Usuń wpis'),
@@ -342,6 +344,15 @@ class EntryDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _authorLine(Entry e, WidgetRef ref) {
+  if (e.isLocal) return 'Zapisane tylko w tym telefonie. Partner go nie widzi.';
+  final me = ref.read(currentUidProvider);
+  if (e.createdBy == null || e.createdBy == me)
+    return 'Wpis wspólny, dodany przez ciebie.';
+  final name = ref.read(memberProfilesProvider)[e.createdBy]?.name;
+  return 'Wpis wspólny, dodał(a): ${name ?? 'partner'}.';
 }
 
 class _Badge extends StatelessWidget {
