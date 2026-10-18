@@ -1,0 +1,91 @@
+name: Build APK
+
+on:
+  push:
+    branches: ['claude/**', main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      # Ten sam klucz przy każdym budowaniu, inaczej Android nie zainstaluje aktualizacji na starej wersji.
+      - name: Klucz podpisujący
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_PASSWORD" ]; then
+            {
+              echo "storePassword=$KEYSTORE_PASSWORD"
+              echo "keyPassword=$KEYSTORE_PASSWORD"
+              echo "keyAlias=kalendarz"
+              echo "storeFile=keystore/kalendarz.p12"
+            } > android/key.properties
+          else
+            echo "::warning::Brak sekretu KEYSTORE_PASSWORD. APK zostanie podpisany kluczem debug i nie zaktualizuje wersji zainstalowanej z właściwym kluczem."
+          fi
+
+      - name: Konfiguracja Firebase
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::warning::Brak sekretu GOOGLE_SERVICES_JSON. Aplikacja pokaże ekran braku konfiguracji."
+            exit 0
+          fi
+          echo "$GOOGLE_SERVICES_JSON" > "$RUNNER_TEMP/google-services.json"
+          jq -e --arg pkg "com.kachaj96.kalendarz" '
+            .client[] | select(.client_info.android_client_info.package_name == $pkg)
+          ' "$RUNNER_TEMP/google-services.json" > "$RUNNER_TEMP/client.json" \
+            || { echo "::error::W google-services.json nie ma aplikacji com.kachaj96.kalendarz."; exit 1; }
+          WEB_CLIENT=$(jq -r '[.oauth_client[]? | select(.client_type == 3) | .client_id][0] // empty' "$RUNNER_TEMP/client.json")
+          if [ -z "$WEB_CLIENT" ]; then
+            echo "::error::Brak klienta OAuth typu web w google-services.json. Włącz logowanie Google w Firebase, dodaj SHA-1 aplikacji i pobierz plik jeszcze raz."
+            exit 1
+          fi
+          jq -n \
+            --slurpfile all "$RUNNER_TEMP/google-services.json" \
+            --slurpfile app "$RUNNER_TEMP/client.json" \
+            --arg web "$WEB_CLIENT" '{
+              FIREBASE_API_KEY: $app[0].api_key[0].current_key,
+              FIREBASE_APP_ID: $app[0].client_info.mobilesdk_app_id,
+              FIREBASE_PROJECT_ID: $all[0].project_info.project_id,
+              FIREBASE_SENDER_ID: $all[0].project_info.project_number,
+              FIREBASE_STORAGE_BUCKET: ($all[0].project_info.storage_bucket // ""),
+              GOOGLE_SERVER_CLIENT_ID: $web
+            }' > "$RUNNER_TEMP/defines.json"
+          echo "DEFINES_FILE=$RUNNER_TEMP/defines.json" >> "$GITHUB_ENV"
+
+      - name: Budowanie APK
+        run: |
+          ARGS=""
+          if [ -n "$DEFINES_FILE" ]; then ARGS="--dart-define-from-file=$DEFINES_FILE"; fi
+          flutter build apk --release --target-platform android-arm64 \
+            --build-number="$GITHUB_RUN_NUMBER" $ARGS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kalendarz-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30

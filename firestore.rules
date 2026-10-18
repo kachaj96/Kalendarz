@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// Reguły dla wspólnego kalendarza dwóch osób.
+// Wkleja się je w konsoli Firebase: Firestore Database -> Reguły -> Opublikuj.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberOf(spaceId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberIds;
+    }
+
+    // Profil użytkownika widzi i zmienia tylko on sam.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Kod zaproszenia: odczyt po dokładnym kodzie (bez listowania), tworzy i kasuje członek przestrzeni.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['spaceId', 'createdBy'])
+        && request.resource.data.createdBy == request.auth.uid
+        && memberOf(request.resource.data.spaceId);
+      allow update: if false;
+      allow delete: if memberOf(resource.data.spaceId);
+    }
+
+    match /spaces/{spaceId} {
+      allow get: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['memberIds', 'profiles', 'createdAt'])
+        && request.resource.data.memberIds == [request.auth.uid];
+
+      allow update: if signedIn() && (
+        // Członek zmienia własny profil albo kod zaproszenia.
+        (request.auth.uid in resource.data.memberIds
+          && request.resource.data.memberIds == resource.data.memberIds
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profiles', 'inviteCode']))
+        ||
+        // Członek wychodzi z przestrzeni.
+        (request.auth.uid in resource.data.memberIds
+          && request.resource.data.memberIds == resource.data.memberIds.removeAll([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'profiles']))
+        ||
+        // Druga osoba dołącza, o ile jest dopiero jedna.
+        (resource.data.memberIds.size() == 1
+          && !(request.auth.uid in resource.data.memberIds)
+          && request.resource.data.memberIds == resource.data.memberIds.concat([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'profiles']))
+      );
+
+      allow delete: if false;
+
+      // Wpisy i kategorie wspólne: pełny dostęp mają tylko członkowie.
+      match /entries/{entryId} {
+        allow read, write: if memberOf(spaceId);
+      }
+      match /categories/{categoryId} {
+        allow read, write: if memberOf(spaceId);
+      }
+    }
+  }
+}
