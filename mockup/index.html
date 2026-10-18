@@ -399,13 +399,13 @@ var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
 var longDate=function(d){return d.getDate()+' '+MON[d.getMonth()]};
 var shortDate=function(d){return DS[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()].slice(0,3)};
 
-var CATS={Dom:{c:'#12808A'},Praca:{c:'#2F6FDE'},Zakupy:{c:'#C75F00'},Zdrowie:{c:'#D13438'},Rodzina:{c:'#7B4FD0'},Finanse:{c:'#1F8A4C'},Inne:{c:'#5F6B80'},Niespodzianki:{c:'#C42B8A',local:true}};
-var CATCOUNT={Dom:14,Praca:21,Zakupy:9,Zdrowie:11,Rodzina:7,Finanse:6,Inne:5,Niespodzianki:2};
+var CATS={Dom:{c:'#12808A'},Praca:{c:'#2F6FDE'},Zakupy:{c:'#C75F00'},Zdrowie:{c:'#D13438'},Sport:{c:'#5E8C0A'},Rodzina:{c:'#7B4FD0'},Finanse:{c:'#1F8A4C'},Inne:{c:'#5F6B80'},Niespodzianki:{c:'#C42B8A',local:true}};
+var CATCOUNT={Dom:14,Praca:21,Zakupy:9,Zdrowie:11,Sport:8,Rodzina:7,Finanse:6,Inne:5,Niespodzianki:2};
 var PALETTE=['#2F6FDE','#12808A','#1F8A4C','#6B8E23','#C75F00','#D13438','#C42B8A','#7B4FD0','#4B5FC7','#8A5A44','#5F6B80','#A8740A'];
 
 /* wpisy; rep.f: d/w/m, rep.days: dni tygodnia (0 = nd) */
 var ENT=[
- {id:1,title:'Bieganie',type:'event',cat:'Zdrowie',date:D(-14),s:'07:00',e:'08:00',rep:{f:'w',days:[2,4]},rems:['10 min wcześniej'],by:'Ty',desc:'Trasa nad rzeką, około 6 km.'},
+ {id:1,title:'Bieganie',type:'event',cat:'Sport',date:D(-14),s:'07:00',e:'08:00',rep:{f:'w',days:[2,4]},rems:['10 min wcześniej'],by:'Ty',desc:'Trasa nad rzeką, około 6 km.'},
  {id:2,title:'Spotkanie projektowe',type:'event',cat:'Praca',date:D(0),s:'09:00',e:'10:00',rems:['30 min wcześniej'],by:'Ty',desc:'Przegląd planu na czwarty kwartał. Link do spotkania jest w mailu.'},
  {id:3,title:'Rozmowa 1:1',type:'event',cat:'Praca',date:D(0),s:'14:00',e:'15:00',local:true,rems:['10 min wcześniej'],by:'Ty',desc:'Pytania: premia, zakres zespołu, urlop w grudniu.'},
  {id:4,title:'Zakupy spożywcze',type:'task',cat:'Zakupy',date:D(-21),s:'17:30',e:'18:30',rep:{f:'w',days:[2]},rems:['1 godz. wcześniej'],by:'Partner',desc:'Sklep po drodze z pracy.',list:['Mleko','Chleb','Jajka','Pomidory','Ser feta','Kawa']},
