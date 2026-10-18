@@ -24,7 +24,7 @@ def calendar(size, monochrome=False):
     d = ImageDraw.Draw(img)
     u = s / 100.0
 
-    k = 1.18  # powiększenie względem środka, nadal w strefie bezpiecznej
+    k = 0.85  # skala tak, by rysunek mieścił się w okrągłej masce (widoczne 72 z 108 dp)
 
     def poly(points, fill):
         d.polygon([((50 + (x - 50) * k) * u, (50 + (y - 52) * k + 2) * u) for x, y in points], fill=fill)
