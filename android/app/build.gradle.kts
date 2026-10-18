@@ -52,6 +52,10 @@ android {
 
     buildTypes {
         release {
+            // Bez wycinania i optymalizacji kodu (R8). Psuło wtyczki w wersji wydaniowej
+            // (ikonka powiadomień, shared_preferences), a dla dwóch osób rozmiar APK nie gra roli.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
