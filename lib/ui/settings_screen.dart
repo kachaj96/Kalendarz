@@ -201,11 +201,43 @@ class _DeviceSectionState extends ConsumerState<DeviceSection> {
       builder: (context, snap) {
         final s = snap.data;
         if (s == null) {
-          return const Card(
+          return Card(
             margin: EdgeInsets.zero,
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Sprawdzam uprawnienia...'),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    snap.hasError
+                        ? 'Nie udało się sprawdzić uprawnień: ${snap.error}'
+                        : 'Sprawdzam uprawnienia...',
+                    key: const Key('device-status-text'),
+                  ),
+                  if (snap.hasError) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                          ),
+                          onPressed: _refresh,
+                          child: const Text('Spróbuj ponownie'),
+                        ),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                          ),
+                          onPressed: () => _run(port.testNotification),
+                          child: const Text('Test teraz'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           );
         }

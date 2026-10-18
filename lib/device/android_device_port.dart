@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart' show Color;
-import 'package:flutter/services.dart' show MethodChannel;
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:home_widget/home_widget.dart';
@@ -60,7 +60,14 @@ class AndroidDevicePort implements DevicePort {
         AndroidFlutterLocalNotificationsPlugin
       >();
 
-  Future<void> _ensureInit() => _init ??= _initialize();
+  /// Nieudany start nie może zostać zapamiętany na zawsze: następne wywołanie spróbuje ponownie.
+  Future<void> _ensureInit() {
+    final init = _init ??= _initialize();
+    return init.catchError((Object e) {
+      _init = null;
+      throw e;
+    });
+  }
 
   Future<void> _initialize() async {
     tzdata.initializeTimeZones();
@@ -70,14 +77,30 @@ class AndroidDevicePort implements DevicePort {
     } catch (_) {
       tz.setLocalLocation(tz.getLocation('Europe/Warsaw'));
     }
-    await _plugin.initialize(
-      settings: const InitializationSettings(
-        android: AndroidInitializationSettings('ic_stat_kalendarz'),
-      ),
-      onDidReceiveNotificationResponse: (r) => _opens.add(r.payload),
-    );
+    try {
+      await _initPlugin('ic_stat_kalendarz');
+    } on PlatformException {
+      // Ikonka mogła wypaść z paczki: powiadomienia z ikoną aplikacji są lepsze niż żadne.
+      await _initPlugin('@mipmap/ic_launcher');
+    }
     await _android?.createNotificationChannel(_remindersChannel);
     await _android?.createNotificationChannel(_partnerChannel);
+  }
+
+  Future<void> _initPlugin(String icon) => _plugin.initialize(
+    settings: InitializationSettings(
+      android: AndroidInitializationSettings(icon),
+    ),
+    onDidReceiveNotificationResponse: (r) => _opens.add(r.payload),
+  );
+
+  /// Odczyt jednego uprawnienia; błąd jednego nie może zablokować pozostałych.
+  Future<T> _safe<T>(Future<T?> Function() read, T fallback) async {
+    try {
+      return await read() ?? fallback;
+    } catch (_) {
+      return fallback;
+    }
   }
 
   NotificationDetails get _reminderDetails => NotificationDetails(
@@ -231,11 +254,18 @@ class AndroidDevicePort implements DevicePort {
     await _ensureInit();
     final prefs = await SharedPreferences.getInstance();
     return DeviceStatus(
-      notificationsEnabled: await _android?.areNotificationsEnabled() ?? false,
-      exactAlarms: await _android?.canScheduleExactNotifications() ?? false,
-      batteryUnrestricted:
-          await _system.invokeMethod<bool>('isIgnoringBatteryOptimizations') ??
-          false,
+      notificationsEnabled: await _safe(
+        () async => _android?.areNotificationsEnabled(),
+        false,
+      ),
+      exactAlarms: await _safe(
+        () async => _android?.canScheduleExactNotifications(),
+        false,
+      ),
+      batteryUnrestricted: await _safe(
+        () => _system.invokeMethod<bool>('isIgnoringBatteryOptimizations'),
+        false,
+      ),
       scheduledCount: prefs.getInt(_kScheduledCount) ?? 0,
     );
   }
