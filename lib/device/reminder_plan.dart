@@ -18,6 +18,7 @@ class PlannedReminder {
     required this.title,
     required this.body,
     required this.entryId,
+    required this.occurrenceKey,
   });
 
   /// Stabilny identyfikator: ten sam wpis, wystąpienie i wyprzedzenie dają ten sam numer.
@@ -26,6 +27,11 @@ class PlannedReminder {
   final String title;
   final String body;
   final String entryId;
+
+  /// Data początku wystąpienia (klucz rrrr-mm-dd), żeby po dotknięciu otworzyć właściwy dzień.
+  final String occurrenceKey;
+
+  String get payload => '$entryId|$occurrenceKey';
 }
 
 /// 31-bitowy skrót FNV-1a, stabilny między uruchomieniami (w przeciwieństwie do String.hashCode).
@@ -90,6 +96,7 @@ List<PlannedReminder> planReminders(Iterable<Entry> entries, DateTime now) {
             title: e.title,
             body: '${_dayPhrase(occ.startDate, at)}, $when',
             entryId: e.id,
+            occurrenceKey: occ.key,
           ),
         );
       }

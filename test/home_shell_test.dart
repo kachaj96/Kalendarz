@@ -238,4 +238,24 @@ void main() {
       'Sobota',
     );
   });
+
+  testWidgets('dotknięte przypomnienie otwiera szczegóły wpisu', (
+    tester,
+  ) async {
+    final device = NoopDevicePort(notificationPayload: 'e1|2026-10-21');
+    await pumpHome(
+      tester,
+      device: device,
+      entries: [
+        makeEntry(
+          title: 'Wizyta u dentysty',
+          date: DateTime(2026, 10, 21),
+          start: 510,
+          end: 555,
+        ),
+      ],
+    );
+    expect(find.byTooltip('Edytuj'), findsOneWidget);
+    expect(find.text('Środa, 21 października'), findsOneWidget);
+  });
 }

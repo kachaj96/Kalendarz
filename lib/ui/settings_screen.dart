@@ -127,7 +127,7 @@ class SettingsScreen extends ConsumerWidget {
             const Card(
               margin: EdgeInsets.zero,
               child: ListTile(
-                title: Text('Kalendarz 0.2'),
+                title: Text('Kalendarz 1.0'),
                 subtitle: Text(
                   'Dane wspólne wymagają internetu. Wpisy lokalne będą działać zawsze.',
                 ),

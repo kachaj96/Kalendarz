@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 import '../data/local_store.dart';
 import '../data/shared_store.dart';
 import '../domain/category.dart';
+import '../domain/entry.dart';
 import '../firebase_config.dart';
 import '../space/models.dart';
 import 'android_device_port.dart';
@@ -31,7 +32,7 @@ void backgroundDispatcher() {
 
 Future<void> runBackgroundSync() async {
   final local = await FileLocalStore().load();
-  var shared = const <dynamic>[];
+  var shared = <Entry>[];
   var sharedCategories = const <SharedCategoryDoc>[];
   var profiles = const <String, Profile>{};
   String? uid;
@@ -68,7 +69,7 @@ Future<void> runBackgroundSync() async {
   };
   await AndroidDevicePort().sync(
     DeviceState(
-      entries: [...local.entries, ...shared.cast()],
+      entries: [...local.entries, ...shared],
       categories: categories,
       now: DateTime.now(),
       myUid: uid,

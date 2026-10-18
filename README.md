@@ -2,7 +2,16 @@
 
 Wspólny kalendarz i planer dla dwóch osób na Androida. Wpisy wspólne widzicie oboje, wpisy lokalne zostają tylko na jednym telefonie. Aplikacja jest po polsku.
 
-Stan: **etap 2**. Działa logowanie kontem Google, parowanie z partnerem kodem, widoki Najbliższe / Dzień / Tydzień / Miesiąc, dodawanie i edycja wpisów (wydarzenia i zadania, cały dzień albo godziny, powtarzanie, listy punktów do odhaczania, kategorie z kolorami) oraz własne kategorie. Wpisy są na razie tylko lokalne, w pamięci telefonu. Współdzielenie wpisów z partnerem, przypomnienia i widżety dochodzą w kolejnych etapach.
+Stan: **wersja 1.0**.
+
+- Logowanie kontem Google i parowanie z partnerem jednorazowym kodem.
+- Widoki Najbliższe, Dzień, Tydzień i Miesiąc.
+- Wydarzenia i zadania: cały dzień albo godziny, wpisy kilkudniowe, powtarzanie (codziennie, co tydzień w wybrane dni, co miesiąc, co rok, z interwałem i końcem), opis, lista punktów do odhaczania.
+- Wpisy wspólne widoczne u obojga na żywo albo lokalne, tylko na jednym telefonie.
+- Kategorie z kolorami: wspólne (osiem domyślnych, w tym Sport, plus własne) i lokalne.
+- Przypomnienia jako alarmy w telefonie. O wspólnych wpisach przypominają oba telefony.
+- Synchronizacja w tle mniej więcej co 30 minut: alarmy dla nowych wpisów partnera i powiadomienie, że coś dodał.
+- Cztery widżety: Najbliższe, Dziś, Tydzień, Miesiąc. Dotknięcie otwiera aplikację na właściwym dniu.
 
 - `mockup/index.html` - klikalna makieta (wybrana wersja A)
 - `lib/` - aplikacja Flutter
@@ -42,12 +51,22 @@ Klucz podpisujący `android/keystore/kalendarz.p12` leży w repozytorium, ale je
 4. Android poprosi o zgodę na instalację z tego źródła (przeglądarki albo menedżera plików). Zezwól. Play Protect może ostrzec o nieznanej aplikacji, wybierz "Zainstaluj mimo to".
 5. Aktualizacja to instalacja nowego APK na stare. Dane lokalne zostają, o ile klucz podpisujący się nie zmienił.
 
+## Przypomnienia i widżety
+
+- Przy pierwszym uruchomieniu Android zapyta o zgodę na powiadomienia. Stan uprawnień jest w menu: **Partner i ustawienia -> Przypomnienia i widżety**. Są tam też przyciski **Test teraz** i **Test za minutę**.
+- Jeśli przypomnienia się spóźniają albo nie przychodzą, zezwól aplikacji na działanie bez ograniczeń baterii (przycisk w tym samym miejscu). Na Xiaomi, Huawei i Samsungu bywa to konieczne.
+- Widżet dodajesz jak każdy inny: przytrzymaj puste miejsce na ekranie głównym, wybierz **Widżety**, znajdź **Kalendarz** i przeciągnij wybrany. Rozmiar zmienisz, przytrzymując widżet.
+- Widżety odświeżają się od razu po zmianach w aplikacji, w tle co ok. 30 minut i tuż po północy.
+
 ## Rozwój
 
 ```sh
 flutter pub get
-flutter analyze
+dart format lib test
+flutter analyze   # CI traktuje każdą uwagę jako błąd
 flutter test
+python3 tool/make_icon.py     # ikona aplikacji i ikonka powiadomień
+python3 tool/gen_widgets.py   # układy widżetów i WidgetIds.kt
 ```
 
 Bez danych Firebase aplikacja uruchomi się i pokaże ekran "Brak konfiguracji Firebase". Dane przekazuje się przez `--dart-define-from-file` (CI buduje taki plik z `GOOGLE_SERVICES_JSON`).

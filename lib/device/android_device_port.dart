@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -48,6 +49,7 @@ class AndroidDevicePort implements DevicePort {
   AndroidDevicePort();
 
   final _plugin = FlutterLocalNotificationsPlugin();
+  final _opens = StreamController<String?>.broadcast();
   Future<void>? _init;
 
   AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
@@ -69,6 +71,7 @@ class AndroidDevicePort implements DevicePort {
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('ic_stat_kalendarz'),
       ),
+      onDidReceiveNotificationResponse: (r) => _opens.add(r.payload),
     );
     await _android?.createNotificationChannel(_remindersChannel);
     await _android?.createNotificationChannel(_partnerChannel);
@@ -126,7 +129,7 @@ class AndroidDevicePort implements DevicePort {
         id: r.id,
         title: r.title,
         body: r.body,
-        payload: r.entryId,
+        payload: r.payload,
         scheduledDate: tz.TZDateTime.from(r.at, tz.local),
         notificationDetails: _reminderDetails,
         androidScheduleMode: exact
@@ -195,7 +198,7 @@ class AndroidDevicePort implements DevicePort {
           id: stableId('nowy|${e.id}'),
           title: '$who dodał(a): ${e.title}',
           body: when,
-          payload: e.id,
+          payload: '${e.id}|${dateKey(e.date)}',
           notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               _partnerChannel.id,
@@ -286,4 +289,15 @@ class AndroidDevicePort implements DevicePort {
 
   @override
   Stream<Uri?> get widgetClicks => HomeWidget.widgetClicked;
+
+  @override
+  Future<String?> initialNotificationPayload() async {
+    await _ensureInit();
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details == null || !details.didNotificationLaunchApp) return null;
+    return details.notificationResponse?.payload;
+  }
+
+  @override
+  Stream<String?> get notificationOpens => _opens.stream;
 }

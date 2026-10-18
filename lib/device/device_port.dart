@@ -53,13 +53,20 @@ abstract class DevicePort {
   /// Adres, z którym aplikację otworzono z widżetu (np. kalendarz://open?tab=day&date=...).
   Future<Uri?> initialWidgetLaunch();
   Stream<Uri?> get widgetClicks;
+
+  /// Dane dotkniętego powiadomienia ("idWpisu|rrrr-mm-dd"), którym otwarto aplikację.
+  Future<String?> initialNotificationPayload();
+  Stream<String?> get notificationOpens;
 }
 
 class NoopDevicePort implements DevicePort {
-  NoopDevicePort({this.launchUri});
+  NoopDevicePort({this.launchUri, this.notificationPayload});
 
   /// Udawany adres otwarcia z widżetu (testy).
   final Uri? launchUri;
+
+  /// Udawane powiadomienie, którym otwarto aplikację (testy).
+  final String? notificationPayload;
   final syncs = <DeviceState>[];
 
   @override
@@ -94,4 +101,10 @@ class NoopDevicePort implements DevicePort {
 
   @override
   Stream<Uri?> get widgetClicks => const Stream.empty();
+
+  @override
+  Future<String?> initialNotificationPayload() async => notificationPayload;
+
+  @override
+  Stream<String?> get notificationOpens => const Stream.empty();
 }

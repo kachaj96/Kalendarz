@@ -10,6 +10,7 @@ import '../providers.dart';
 import '../providers_calendar.dart';
 import '../space/models.dart';
 import 'categories_screen.dart';
+import 'entry_detail_screen.dart';
 import 'format.dart';
 import 'invite_card.dart';
 import 'navigation.dart';
@@ -48,6 +49,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   Timer? _syncTimer;
   StreamSubscription<Uri?>? _widgetClicks;
+  StreamSubscription<String?>? _notificationOpens;
+  String? _pendingNotification;
   AppLifecycleListener? _lifecycle;
 
   @override
@@ -56,11 +59,24 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final port = ref.read(devicePortProvider);
     port.askPermissionsOnce().catchError((Object _) {});
     port.initialWidgetLaunch().then(_openFromWidget).catchError((Object _) {});
+    port
+        .initialNotificationPayload()
+        .then(_openFromNotification)
+        .catchError((Object _) {});
+    _notificationOpens = port.notificationOpens.listen(
+      _openFromNotification,
+      onError: (Object _) {},
+    );
     _widgetClicks = port.widgetClicks.listen(
       _openFromWidget,
       onError: (Object _) {},
     );
-    ref.listenManual(entriesProvider, (_, _) => _scheduleSync());
+    ref.listenManual(entriesProvider, (_, _) {
+      _scheduleSync();
+      if (_pendingNotification != null) {
+        _openFromNotification(_pendingNotification);
+      }
+    });
     ref.listenManual(categoryByIdProvider, (_, _) => _scheduleSync());
     _lifecycle = AppLifecycleListener(onResume: _scheduleSync);
     _scheduleSync();
@@ -70,6 +86,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   void dispose() {
     _syncTimer?.cancel();
     _widgetClicks?.cancel();
+    _notificationOpens?.cancel();
     _lifecycle?.dispose();
     super.dispose();
   }
@@ -100,6 +117,35 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
         )
         .catchError((Object _) {});
+  }
+
+  /// Dotknięte przypomnienie otwiera szczegóły wpisu ("idWpisu|rrrr-mm-dd").
+  /// Jeśli dane jeszcze się wczytują, próbujemy ponownie po ich nadejściu.
+  void _openFromNotification(String? payload) {
+    if (payload == null || !mounted) return;
+    final parts = payload.split('|');
+    final id = parts.first;
+    final date = parts.length > 1 ? DateTime.tryParse(parts[1]) : null;
+    if (!ref.read(entriesProvider).any((e) => e.id == id)) {
+      final loaded =
+          ref.read(localDataProvider).hasValue &&
+          (ref.read(currentSpaceIdProvider) == null ||
+              ref.read(sharedEntriesProvider).hasValue);
+      // Wpis usunięty w międzyczasie: nie ma czego otwierać.
+      _pendingNotification = loaded ? null : payload;
+      return;
+    }
+    _pendingNotification = null;
+    final navigator = Navigator.of(context);
+    navigator.popUntil((r) => r.isFirst);
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => EntryDetailScreen(
+          entryId: id,
+          occurrenceStart: dateOnly(date ?? ref.read(clockProvider)()),
+        ),
+      ),
+    );
   }
 
   /// Widżet otwiera aplikację adresem kalendarz://open?tab=day&date=2026-10-24.
